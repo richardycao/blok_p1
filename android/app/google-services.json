@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "353710030824",
+    "project_id": "blok-3805d",
+    "storage_bucket": "blok-3805d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:353710030824:android:46359fd43a1dfdc43dee5d",
+        "android_client_info": {
+          "package_name": "com.example.blok_p1"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "353710030824-v2o1ot1prg6njtt0lmovgepsg57uk0cq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAbr8ZJO1SGQdJ2kkJ_zeKsYiK6gBldWXk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "353710030824-v2o1ot1prg6njtt0lmovgepsg57uk0cq.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
