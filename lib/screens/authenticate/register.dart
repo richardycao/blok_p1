@@ -1,12 +1,12 @@
 import 'package:blok_p1/services/auth.dart';
 import 'package:flutter/material.dart';
 
-class SignIn extends StatefulWidget {
+class Register extends StatefulWidget {
   @override
-  _SignInState createState() => _SignInState();
+  _RegisterState createState() => _RegisterState();
 }
 
-class _SignInState extends State<SignIn> {
+class _RegisterState extends State<Register> {
   final AuthService _auth = AuthService();
   final _formKey = GlobalKey<FormState>();
 
@@ -20,7 +20,7 @@ class _SignInState extends State<SignIn> {
     return Scaffold(
       appBar: AppBar(
         elevation: 0.0,
-        title: Text('Sign in with email'),
+        title: Text('Register with email'),
       ),
       body: Container(
         padding: EdgeInsets.symmetric(vertical: 20.0, horizontal: 50.0),
@@ -61,14 +61,13 @@ class _SignInState extends State<SignIn> {
               ),
               RaisedButton(
                 color: Colors.blue[900],
-                child: Text('Sign in', style: TextStyle(color: Colors.white)),
+                child: Text('Register', style: TextStyle(color: Colors.white)),
                 onPressed: () async {
                   if (_formKey.currentState.validate()) {
-                    dynamic result =
-                        await _auth.signInWithEmailAndPassword(email, password);
+                    dynamic result = await _auth.registerWithEmailAndPassword(
+                        email, password);
                     if (result == null) {
-                      setState(() => error =
-                          'Credentials did not match an existing account');
+                      setState(() => error = 'Registration failed');
                     }
                   }
                 },

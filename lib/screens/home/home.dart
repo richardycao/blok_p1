@@ -7,9 +7,7 @@ class Home extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.black45,
         title: Text('Home page'),
         elevation: 0.0,
         actions: <Widget>[
