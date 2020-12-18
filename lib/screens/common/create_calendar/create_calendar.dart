@@ -3,7 +3,7 @@ import 'package:blok_p1/services/auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class QuickCreateCalendar extends StatelessWidget {
+class CreateCalendar extends StatelessWidget {
   final AuthService _auth = AuthService();
 
   @override

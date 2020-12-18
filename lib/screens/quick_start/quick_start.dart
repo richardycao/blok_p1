@@ -1,5 +1,5 @@
 import 'package:blok_p1/screens/authenticate/authenticate.dart';
-import 'package:blok_p1/screens/quick_start/quick_create_calendar.dart';
+import 'package:blok_p1/screens/common/create_calendar/create_calendar.dart';
 import 'package:flutter/material.dart';
 
 class QuickStart extends StatelessWidget {
@@ -22,8 +22,7 @@ class QuickStart extends StatelessWidget {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                          builder: (context) => QuickCreateCalendar()),
+                      MaterialPageRoute(builder: (context) => CreateCalendar()),
                     );
                   },
                   child: Text('Create calendar')),
