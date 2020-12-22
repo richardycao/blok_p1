@@ -1,5 +1,6 @@
 import 'package:blok_p1/models/user.dart';
 import 'package:blok_p1/screens/calendar/create_calendar/create_calendar.dart';
+import 'package:blok_p1/screens/calendar/join_calendar/join_calendar.dart';
 import 'package:blok_p1/screens/home/home.dart';
 import 'package:blok_p1/screens/wrapper.dart';
 import 'package:blok_p1/services/auth.dart';
@@ -12,7 +13,7 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-  var routes = {
+  final routes = {
     '/': (context) => Wrapper(),
     '/calendar': (context) => Wrapper(),
     '/authenticate/register': (context) => Authenticate(
@@ -22,7 +23,7 @@ class MyApp extends StatelessWidget {
           register: false,
         ),
     '/calendar/create': (context) => CreateCalendar(),
-    '/calendar/join': (context) => Home(),
+    '/calendar/join': (context) => JoinCalendar(),
     '/calendar/:id': (context) => Home(),
     '/calendar/:id/details': (context) => Home(),
   };

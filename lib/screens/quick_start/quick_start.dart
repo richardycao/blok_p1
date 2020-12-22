@@ -1,8 +1,9 @@
-import 'package:blok_p1/screens/authenticate/sign_in/sign_in.dart';
-import 'package:blok_p1/screens/calendar/create_calendar/create_calendar.dart';
+import 'package:blok_p1/services/auth.dart';
 import 'package:flutter/material.dart';
 
 class QuickStart extends StatelessWidget {
+  final AuthService _auth = AuthService();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -19,14 +20,23 @@ class QuickStart extends StatelessWidget {
                   onPressed: () {
                     Navigator.pushNamed(context, '/authenticate/register');
                   },
-                  child: Text('Create calendar')),
+                  child: Text('Start Organizing')),
               SizedBox(
                 height: 20.0,
               ),
-              // ElevatedButton(onPressed: null, child: Text('Join calendar')),
-              // SizedBox(
-              //   height: 20.0,
-              // ),
+              ElevatedButton(
+                  onPressed: () async {
+                    dynamic result = await _auth.signInAnon();
+                    if (result == null) {
+                      print('Error signing in as anon');
+                    } else {
+                      Navigator.pushNamed(context, '/calendar/join');
+                    }
+                  },
+                  child: Text('Join event')),
+              SizedBox(
+                height: 20.0,
+              ),
               TextButton(
                   onPressed: () {
                     Navigator.pushNamed(

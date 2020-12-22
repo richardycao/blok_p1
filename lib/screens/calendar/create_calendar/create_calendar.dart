@@ -20,11 +20,7 @@ class CreateCalendar extends StatelessWidget {
               children: [
                 ElevatedButton(
                   child: Text('Go to home page'),
-                  onPressed: () async {
-                    dynamic result = await _auth.signInAnon();
-                    if (result == null) {
-                      print('Error signing in as anon');
-                    }
+                  onPressed: () {
                     Navigator.pop(context);
                   },
                 ),
