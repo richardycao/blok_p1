@@ -19,7 +19,7 @@ class JoinCalendar extends StatelessWidget {
             child: Column(
               children: [
                 ElevatedButton(
-                  child: Text('Go to home page'),
+                  child: Text('Go to home page for now'),
                   onPressed: () async {
                     Navigator.pop(context);
                   },

@@ -38,7 +38,7 @@ class _HomeState extends State<Home> {
               label: Text('Logout')),
           FlatButton.icon(
               onPressed: () {
-                // go to convert page (almost same as register page)
+                Navigator.pushNamed(context, '/authenticate/convert');
               },
               icon: Icon(Icons.arrow_circle_up),
               label: Text('Convert')),

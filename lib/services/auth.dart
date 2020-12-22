@@ -42,8 +42,7 @@ class AuthService {
   // }
 
   // convert anon to email and password
-  Future convertUserWithEmailAndPassword(
-      String email, String password, String name) async {
+  Future convertUserWithEmailAndPassword(String email, String password) async {
     final user = await _auth.currentUser();
 
     final credential =

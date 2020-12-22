@@ -9,7 +9,7 @@ class DatabaseService {
       Firestore.instance.collection('users');
 
   // call this when a new user signs up (including converting (?))
-  Future updateUserData(String email, {String displayName = "New User"}) async {
+  Future updateUserData(String email, {String displayName = "Guest"}) async {
     return await userCollection.document(userId).setData({
       'displayName': displayName,
       'email': email,
