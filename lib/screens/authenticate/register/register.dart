@@ -68,6 +68,9 @@ class _RegisterState extends State<Register> {
                         email, password);
                     if (result == null) {
                       setState(() => error = 'Registration failed');
+                    } else {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, '/calendar/create');
                     }
                   }
                 },

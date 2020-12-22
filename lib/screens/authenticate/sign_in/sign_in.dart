@@ -69,6 +69,8 @@ class _SignInState extends State<SignIn> {
                     if (result == null) {
                       setState(() => error =
                           'Credentials did not match an existing account');
+                    } else {
+                      Navigator.pop(context);
                     }
                   }
                 },
