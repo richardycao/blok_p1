@@ -1,5 +1,6 @@
 import 'package:blok_p1/models/user.dart';
 import 'package:blok_p1/services/auth.dart';
+import 'package:blok_p1/services/database.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -19,9 +20,10 @@ class CreateCalendar extends StatelessWidget {
             child: Column(
               children: [
                 ElevatedButton(
-                  child: Text('Go to home page'),
-                  onPressed: () {
-                    Navigator.pop(context);
+                  child: Text('Generate a dummy calendar'),
+                  onPressed: () async {
+                    await DatabaseService(userId: user.userId)
+                        .createCalendar("dummy name");
                   },
                 ),
               ],

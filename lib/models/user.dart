@@ -1,9 +1,9 @@
 class User {
-  //final String providerId;
   final String userId;
   String displayName;
   String email;
-  //String photoURL;
+  Map<String, String> ownedCalendars;
+  Map<String, String> followedCalendars;
 
   User({
     this.userId,

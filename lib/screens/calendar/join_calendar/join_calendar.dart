@@ -1,5 +1,6 @@
 import 'package:blok_p1/models/user.dart';
 import 'package:blok_p1/services/auth.dart';
+import 'package:blok_p1/services/database.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -19,9 +20,14 @@ class JoinCalendar extends StatelessWidget {
             child: Column(
               children: [
                 ElevatedButton(
-                  child: Text('Go to home page for now'),
+                  child: Text('Scan QR code (does nothing)'),
+                  onPressed: () async {},
+                ),
+                ElevatedButton(
+                  child: Text('Join hard-coded calendar ID'),
                   onPressed: () async {
-                    Navigator.pop(context);
+                    await DatabaseService(userId: user.userId).joinCalendar(
+                        "5DqRNUkOji3Fydgt84XF"); // hardcoded for testing for now
                   },
                 ),
               ],

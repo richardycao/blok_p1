@@ -25,7 +25,7 @@ class AuthService {
       FirebaseUser user = result.user;
 
       // create a new document for the user with the userId
-      await DatabaseService(userId: user.uid).updateUserData(null);
+      await DatabaseService(userId: user.uid).createUser();
       return _userFromFirebaseUser(user);
     } catch (e) {
       print(e.toString());
@@ -50,7 +50,7 @@ class AuthService {
     await user.linkWithCredential(credential);
 
     // create a new document for the user with the userId
-    await DatabaseService(userId: user.uid).updateUserData(email);
+    await DatabaseService(userId: user.uid).updateUserData(email: email);
   }
 
   // register with email and password (quick start - create calendar)
@@ -63,7 +63,7 @@ class AuthService {
       FirebaseUser user = result.user;
 
       // create a new document for the user with the userId
-      await DatabaseService(userId: user.uid).updateUserData(email);
+      await DatabaseService(userId: user.uid).createUser(email: email);
       return _userFromFirebaseUser(user);
     } catch (e) {
       print(e.toString());

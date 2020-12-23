@@ -31,17 +31,17 @@ class _HomeState extends State<Home> {
         title: tabs.item(_tabIndex)['title'],
         actions: <Widget>[
           FlatButton.icon(
-              onPressed: () async {
-                await _auth.signOut();
-              },
-              icon: Icon(Icons.person),
-              label: Text('Logout')),
-          FlatButton.icon(
               onPressed: () {
                 Navigator.pushNamed(context, '/authenticate/convert');
               },
               icon: Icon(Icons.arrow_circle_up),
               label: Text('Convert')),
+          FlatButton.icon(
+              onPressed: () async {
+                await _auth.signOut();
+              },
+              icon: Icon(Icons.person),
+              label: Text('Logout')),
         ],
       ),
       body: tabs.item(_tabIndex)['page'],
