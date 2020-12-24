@@ -5,5 +5,5 @@ class Calendar {
   List<String> owners;
   List<String> followers;
 
-  Calendar({this.calendarId, this.owners});
+  Calendar({this.calendarId, this.name, this.owners});
 }

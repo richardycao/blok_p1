@@ -14,8 +14,8 @@ class AuthService {
   }
 
   // auth change user stream
-  Stream<User> get user {
-    return _auth.onAuthStateChanged.map(_userFromFirebaseUser);
+  Stream<FirebaseUser> get user {
+    return _auth.onAuthStateChanged; //.map(_userFromFirebaseUser);
   }
 
   // sign in anon (quick start - join calendar)
@@ -34,35 +34,43 @@ class AuthService {
   }
 
   // update user's display name
-  // Future updateDisplayName(String name, FirebaseUser currentUser) async {
-  //   var userUpdateInfo = UserUpdateInfo();
-  //   userUpdateInfo.displayName = name;
-  //   await currentUser.updateProfile(userUpdateInfo);
-  //   await currentUser.reload();
-  // }
+  Future updateDisplayName(String name, FirebaseUser user) async {
+    var updateInfo = UserUpdateInfo();
+    updateInfo.displayName = name;
+    await user.updateProfile(updateInfo);
+    await user.reload();
+  }
 
   // convert anon to email and password
   Future convertUserWithEmailAndPassword(String email, String password) async {
-    final user = await _auth.currentUser();
+    try {
+      final user = await _auth.currentUser();
 
-    final credential =
-        EmailAuthProvider.getCredential(email: email, password: password);
-    await user.linkWithCredential(credential);
+      updateDisplayName("Guest", user);
+      final credential =
+          EmailAuthProvider.getCredential(email: email, password: password);
+      AuthResult result = await user.linkWithCredential(credential);
+      FirebaseUser resultUser = result.user;
 
-    // create a new document for the user with the userId
-    await DatabaseService(userId: user.uid).updateUserData(email: email);
+      // update user info in firestore
+      await DatabaseService(userId: user.uid).updateUserData(email: email);
+      return _userFromFirebaseUser(resultUser);
+    } catch (e) {
+      print(e);
+      return null;
+    }
   }
 
   // register with email and password (quick start - create calendar)
   Future registerWithEmailAndPassword(String email, String password) async {
     try {
+      // creates a user in firebase auth
       AuthResult result = await _auth.createUserWithEmailAndPassword(
-          // may be different for anon -> email
-          email: email,
-          password: password);
+          email: email, password: password);
       FirebaseUser user = result.user;
+      updateDisplayName("Guest", user);
 
-      // create a new document for the user with the userId
+      // creates user in firestore
       await DatabaseService(userId: user.uid).createUser(email: email);
       return _userFromFirebaseUser(user);
     } catch (e) {

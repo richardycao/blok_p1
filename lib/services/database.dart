@@ -1,3 +1,5 @@
+import 'package:blok_p1/models/calendar.dart';
+import 'package:blok_p1/models/user.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class DatabaseService {
@@ -8,6 +10,18 @@ class DatabaseService {
       Firestore.instance.collection('users');
   final CollectionReference calendarCollection =
       Firestore.instance.collection('calendars');
+
+  Stream<User> streamUser() {
+    try {
+      return userCollection
+          .document(userId)
+          .snapshots()
+          .map((snapshot) => User.fromMap(snapshot.data));
+    } catch (e) {
+      print(e);
+      return null;
+    }
+  }
 
   // CREATE user
   Future createUser({String displayName = "Guest", String email}) async {

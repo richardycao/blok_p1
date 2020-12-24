@@ -6,6 +6,7 @@ import 'package:blok_p1/screens/home/home.dart';
 import 'package:blok_p1/screens/wrapper.dart';
 import 'package:blok_p1/services/auth.dart';
 import 'package:blok_p1/screens/authenticate/authenticate.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -32,7 +33,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return StreamProvider<User>.value(
+    return StreamProvider<FirebaseUser>.value(
       value: AuthService().user,
       child: MaterialApp(
         routes: routes,
