@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class Calendar {
   final String calendarId;
   String name;
@@ -12,10 +14,11 @@ class Calendar {
       this.owners,
       this.followers});
 
-  factory Calendar.fromMap(Map data) {
+  factory Calendar.fromSnapshot(DocumentSnapshot snapshot) {
+    Map data = snapshot.data;
     data = data ?? {};
     return Calendar(
-      calendarId: data['calendarId'] as String ?? null,
+      calendarId: snapshot.documentID ?? null,
       name: data['name'] as String ?? null,
       description: data['description'] as String ?? null,
       owners: List<String>.from(data['owners']) ?? {},

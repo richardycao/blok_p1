@@ -23,9 +23,10 @@ class AuthService {
     try {
       AuthResult result = await _auth.signInAnonymously();
       FirebaseUser user = result.user;
+      updateDisplayName("Guest", user);
 
       // create a new document for the user with the userId
-      await DatabaseService(userId: user.uid).createUser();
+      await DatabaseService(userId: user.uid).createUser(displayName: "Guest");
       return _userFromFirebaseUser(user);
     } catch (e) {
       print(e.toString());
@@ -46,7 +47,6 @@ class AuthService {
     try {
       final user = await _auth.currentUser();
 
-      updateDisplayName("Guest", user);
       final credential =
           EmailAuthProvider.getCredential(email: email, password: password);
       AuthResult result = await user.linkWithCredential(credential);

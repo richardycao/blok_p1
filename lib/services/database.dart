@@ -1,3 +1,4 @@
+import 'package:blok_p1/constants/auth_constants.dart';
 import 'package:blok_p1/models/calendar.dart';
 import 'package:blok_p1/models/user.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -17,7 +18,7 @@ class DatabaseService {
       return userCollection
           .document(userId)
           .snapshots()
-          .map((snapshot) => User.fromMap(snapshot.data));
+          .map((snapshot) => User.fromSnapshot(snapshot));
     } catch (e) {
       print(e);
       return null;
@@ -29,7 +30,7 @@ class DatabaseService {
       return calendarCollection
           .document(calendarId)
           .snapshots()
-          .map((snapshot) => Calendar.fromMap(snapshot.data));
+          .map((snapshot) => Calendar.fromSnapshot(snapshot));
     } catch (e) {
       print(e);
       return null;
@@ -37,20 +38,23 @@ class DatabaseService {
   }
 
   // CREATE user
-  Future createUser({String displayName = "Guest", String email}) async {
+  Future createUser({String displayName = anon_name, String email}) async {
     return await userCollection.document(userId).setData({
       'displayName': displayName,
       'email': email,
       'ownedCalendars': {},
       'followedCalendars': {},
+      'serverEnabled': false,
     });
   }
 
   // UPDATE user data
-  Future updateUserData({String displayName, String email}) async {
-    return await userCollection.document(userId).setData({
-      'displayName': displayName,
-      'email': email,
+  Future updateUserData(
+      {String displayName, String email, bool serverEnabled}) async {
+    await userCollection.document(userId).setData({
+      if (displayName != null) 'displayName': displayName,
+      if (email != null) 'email': email,
+      if (serverEnabled != null) 'serverEnabled': serverEnabled,
     }, merge: true);
   }
 
