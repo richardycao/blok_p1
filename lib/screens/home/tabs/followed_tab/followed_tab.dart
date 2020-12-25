@@ -1,17 +1,16 @@
 import 'package:blok_p1/models/calendar.dart';
 import 'package:blok_p1/models/user.dart';
 import 'package:blok_p1/screens/common/loading.dart';
-import 'package:blok_p1/screens/home/tabs/owned/owned_calendar_tile.dart';
-import 'package:blok_p1/services/database.dart';
+import 'package:blok_p1/screens/home/tabs/followed_tab/followed_calendar_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class OwnedCalendars extends StatefulWidget {
+class FollowedCalendars extends StatefulWidget {
   @override
-  _OwnedCalendarsState createState() => _OwnedCalendarsState();
+  _FollowedCalendarsState createState() => _FollowedCalendarsState();
 }
 
-class _OwnedCalendarsState extends State<OwnedCalendars> {
+class _FollowedCalendarsState extends State<FollowedCalendars> {
   @override
   Widget build(BuildContext context) {
     final User user = Provider.of<User>(context);
@@ -21,16 +20,16 @@ class _OwnedCalendarsState extends State<OwnedCalendars> {
       );
     }
 
-    final List<Calendar> ownedCalendars =
-        user.ownedCalendars.entries.map((entry) {
+    final List<Calendar> followedCalendars =
+        user.followedCalendars.entries.map((entry) {
       return Calendar(calendarId: entry.key, name: entry.value);
     }).toList();
 
     return ListView.builder(
-      itemCount: ownedCalendars.length,
+      itemCount: followedCalendars.length,
       itemBuilder: (context, index) {
-        return OwnedCalendarTile(
-          calendar: ownedCalendars[index],
+        return FollowedCalendarTile(
+          calendarDetails: followedCalendars[index],
         );
       },
     );

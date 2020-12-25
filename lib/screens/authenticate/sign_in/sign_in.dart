@@ -3,8 +3,9 @@ import 'package:blok_p1/services/auth.dart';
 import 'package:flutter/material.dart';
 
 class SignIn extends StatefulWidget {
-  final Function toggleView;
+  static const route = '/authenticate/sign-in';
 
+  final Function toggleView;
   SignIn({this.toggleView});
 
   @override

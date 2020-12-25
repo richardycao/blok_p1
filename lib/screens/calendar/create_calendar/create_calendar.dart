@@ -1,4 +1,3 @@
-import 'package:blok_p1/models/user.dart';
 import 'package:blok_p1/screens/common/loading.dart';
 import 'package:blok_p1/services/database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -6,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class CreateCalendar extends StatelessWidget {
+  static const route = '/calendar/create';
+
   @override
   Widget build(BuildContext context) {
     final FirebaseUser user = Provider.of<FirebaseUser>(context);

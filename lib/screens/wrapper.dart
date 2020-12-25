@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class Wrapper extends StatelessWidget {
+  static const route = '/';
+
   @override
   Widget build(BuildContext context) {
     final FirebaseUser user = Provider.of<FirebaseUser>(context);

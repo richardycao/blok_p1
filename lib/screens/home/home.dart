@@ -1,4 +1,5 @@
 import 'package:blok_p1/models/user.dart';
+import 'package:blok_p1/screens/authenticate/convert/convert.dart';
 import 'package:blok_p1/screens/home/tabs/tabs.dart';
 import 'package:blok_p1/services/auth.dart';
 import 'package:blok_p1/services/database.dart';
@@ -32,16 +33,16 @@ class _HomeState extends State<Home> {
         return Scaffold(
           floatingActionButton: FloatingActionButton(
             onPressed: () {
-              Navigator.pushNamed(context, tabs.routes()[_tabIndex].toString());
+              Navigator.pushNamed(context, tabs.floatingRoutes()[_tabIndex]);
             },
             child: Icon(Icons.add),
           ),
           appBar: AppBar(
-            title: tabs.item(_tabIndex)['title'],
+            title: tabs.item(_tabIndex).title,
             actions: <Widget>[
               FlatButton.icon(
                   onPressed: () {
-                    Navigator.pushNamed(context, '/authenticate/convert');
+                    Navigator.pushNamed(context, Convert.route);
                   },
                   icon: Icon(Icons.arrow_circle_up),
                   label: Text('Convert')),
@@ -53,7 +54,7 @@ class _HomeState extends State<Home> {
                   label: Text('Logout')),
             ],
           ),
-          body: tabs.item(_tabIndex)['page'],
+          body: tabs.item(_tabIndex).page,
           bottomNavigationBar: BottomNavigationBar(
             onTap: onTabTap,
             currentIndex: _tabIndex,

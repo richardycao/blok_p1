@@ -1,7 +1,10 @@
-import 'package:blok_p1/models/user.dart';
 import 'package:blok_p1/screens/authenticate/convert/convert.dart';
+import 'package:blok_p1/screens/authenticate/register/register.dart';
+import 'package:blok_p1/screens/authenticate/sign_in/sign_in.dart';
 import 'package:blok_p1/screens/calendar/create_calendar/create_calendar.dart';
+import 'package:blok_p1/screens/calendar/followed_calendar/followed_calendar.dart';
 import 'package:blok_p1/screens/calendar/join_calendar/join_calendar.dart';
+import 'package:blok_p1/screens/calendar/owned_calendar/owned_calendar.dart';
 import 'package:blok_p1/screens/home/home.dart';
 import 'package:blok_p1/screens/wrapper.dart';
 import 'package:blok_p1/services/auth.dart';
@@ -16,18 +19,22 @@ void main() {
 
 class MyApp extends StatelessWidget {
   final routes = {
-    '/': (context) => Wrapper(),
-    '/calendar': (context) => Wrapper(),
-    '/authenticate/register': (context) => Authenticate(
-          register: true,
-        ),
-    '/authenticate/sign-in': (context) => Authenticate(
+    Wrapper.route: (context) => Wrapper(),
+    Authenticate.route: (context) => Authenticate(
           register: false,
         ),
-    '/authenticate/convert': (context) => Convert(),
-    '/calendar/create': (context) => CreateCalendar(),
-    '/calendar/join': (context) => JoinCalendar(),
-    '/calendar/:id': (context) => Home(),
+    Register.route: (context) => Authenticate(
+          register: true,
+        ),
+    SignIn.route: (context) => Authenticate(
+          register: false,
+        ),
+    Convert.route: (context) => Convert(),
+    '/calendar': (context) => Wrapper(),
+    CreateCalendar.route: (context) => CreateCalendar(),
+    JoinCalendar.route: (context) => JoinCalendar(),
+    OwnedCalendar.route: (context) => OwnedCalendar(),
+    FollowedCalendar.route: (context) => FollowedCalendar(),
     '/calendar/:id/details': (context) => Home(),
   };
 
@@ -36,6 +43,7 @@ class MyApp extends StatelessWidget {
     return StreamProvider<FirebaseUser>.value(
       value: AuthService().user,
       child: MaterialApp(
+        initialRoute: '/',
         routes: routes,
       ),
     );

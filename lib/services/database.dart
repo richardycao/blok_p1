@@ -3,8 +3,9 @@ import 'package:blok_p1/models/user.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class DatabaseService {
-  final String userId;
-  DatabaseService({this.userId});
+  String userId;
+  String calendarId;
+  DatabaseService({this.userId, this.calendarId});
 
   final CollectionReference userCollection =
       Firestore.instance.collection('users');
@@ -17,6 +18,18 @@ class DatabaseService {
           .document(userId)
           .snapshots()
           .map((snapshot) => User.fromMap(snapshot.data));
+    } catch (e) {
+      print(e);
+      return null;
+    }
+  }
+
+  Stream<Calendar> streamCalendar() {
+    try {
+      return calendarCollection
+          .document(calendarId)
+          .snapshots()
+          .map((snapshot) => Calendar.fromMap(snapshot.data));
     } catch (e) {
       print(e);
       return null;

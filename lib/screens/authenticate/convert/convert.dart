@@ -3,8 +3,9 @@ import 'package:blok_p1/services/auth.dart';
 import 'package:flutter/material.dart';
 
 class Convert extends StatefulWidget {
-  final Function toggleView;
+  static const route = '/authenticate/convert';
 
+  final Function toggleView;
   Convert({this.toggleView});
 
   @override

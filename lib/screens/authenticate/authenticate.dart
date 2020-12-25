@@ -3,8 +3,9 @@ import 'package:blok_p1/screens/authenticate/sign_in/sign_in.dart';
 import 'package:flutter/material.dart';
 
 class Authenticate extends StatefulWidget {
-  bool register = true;
+  static const route = '/authenticate';
 
+  bool register = true;
   Authenticate({this.register});
 
   @override

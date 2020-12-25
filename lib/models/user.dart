@@ -16,9 +16,9 @@ class User {
   factory User.fromMap(Map data) {
     data = data ?? {};
     return User(
-      userId: data['userId'] as String ?? "null",
-      displayName: data['displayName'] as String ?? "null",
-      email: data['email'] as String ?? "null",
+      userId: data['userId'] as String ?? null,
+      displayName: data['displayName'] as String ?? null,
+      email: data['email'] as String ?? null,
       ownedCalendars: Map<String, String>.from(data['ownedCalendars']) ?? {},
       followedCalendars:
           Map<String, String>.from(data['followedCalendars']) ?? {},

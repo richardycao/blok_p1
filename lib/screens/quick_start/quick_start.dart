@@ -1,3 +1,5 @@
+import 'package:blok_p1/screens/authenticate/register/register.dart';
+import 'package:blok_p1/screens/authenticate/sign_in/sign_in.dart';
 import 'package:blok_p1/services/auth.dart';
 import 'package:blok_p1/styles/styles_quick_start.dart';
 import 'package:flutter/material.dart';
@@ -23,7 +25,7 @@ class QuickStart extends StatelessWidget {
               ),
               ElevatedButton(
                   onPressed: () {
-                    Navigator.pushNamed(context, '/authenticate/register');
+                    Navigator.pushNamed(context, Register.route);
                   },
                   child: Text('Organizer', style: quickStartButtonFont)),
               SizedBox(
@@ -45,7 +47,7 @@ class QuickStart extends StatelessWidget {
                   onPressed: () {
                     Navigator.pushNamed(
                       context,
-                      '/authenticate/sign-in',
+                      SignIn.route,
                     );
                   },
                   child: Text('Existing user?')),
