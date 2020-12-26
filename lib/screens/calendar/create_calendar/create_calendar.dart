@@ -28,8 +28,7 @@ class CreateCalendar extends StatelessWidget {
                   child: Text('Generate a dummy calendar'),
                   onPressed: () async {
                     await DatabaseService(userId: user.uid).createCalendar(
-                        "dummy name" +
-                            Random.secure().nextInt(10000).toString());
+                        "name " + Random.secure().nextInt(10000).toString());
                   },
                 ),
               ],

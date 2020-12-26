@@ -79,13 +79,11 @@ class _ConvertState extends State<Convert> {
                           dynamic result = await _auth
                               .convertUserWithEmailAndPassword(email, password);
                           if (result == null) {
-                            print('is null');
                             setState(() {
                               error = 'Error with those credentials';
                               loading = false;
                             });
                           } else {
-                            print('not null');
                             Navigator.pop(context);
                           }
                         }

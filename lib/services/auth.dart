@@ -71,7 +71,8 @@ class AuthService {
       updateDisplayName("Guest", user);
 
       // creates user in firestore
-      await DatabaseService(userId: user.uid).createUser(email: email);
+      await DatabaseService(userId: user.uid)
+          .createUser(email: email, serverEnabled: true);
       return _userFromFirebaseUser(user);
     } catch (e) {
       print(e.toString());

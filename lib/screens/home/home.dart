@@ -41,8 +41,6 @@ class _HomeState extends State<Home> {
             serverEnabled: user != null ? user.serverEnabled : false,
             onServerEnabled: onServerEnabled);
 
-        print(tabs.item(_tabIndex).label);
-
         return tabs.item(_tabIndex) == null
             ? Loading
             : Scaffold(
