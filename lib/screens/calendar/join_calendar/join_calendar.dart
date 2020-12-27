@@ -26,7 +26,7 @@ class JoinCalendar extends StatelessWidget {
                   child: Text('Join hard-coded calendar ID'),
                   onPressed: () async {
                     await DatabaseService(userId: user.uid).joinCalendar(
-                        "5DqRNUkOji3Fydgt84XF"); // hardcoded for testing for now
+                        "I7rGeBU5q2qp2Ebs7vh7"); // hardcoded for testing for now
                   },
                 ),
               ],

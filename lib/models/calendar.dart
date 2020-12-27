@@ -5,10 +5,12 @@ class Calendar {
   final String calendarId;
   String name;
   String description;
-  List<String> owners;
-  List<String> followers;
+  Map<String, String> owners;
+  Map<String, String> followers;
   int backVisibility;
   int forwardVisibility;
+  DateTime createDate;
+  int granularity; // in minutes
 
   Calendar(
       {this.calendarId,
@@ -17,7 +19,9 @@ class Calendar {
       this.owners,
       this.followers,
       this.backVisibility,
-      this.forwardVisibility});
+      this.forwardVisibility,
+      this.createDate,
+      this.granularity});
 
   factory Calendar.fromSnapshot(DocumentSnapshot snapshot) {
     // check if updating a time slot will trigger a calendar update
@@ -28,14 +32,24 @@ class Calendar {
       calendarId: snapshot.documentID ?? null,
       name: data['name'] as String ?? null,
       description: data['description'] as String ?? null,
-      owners: List<String>.from(data['owners']) ?? {},
-      followers: List<String>.from(data['followers']) ?? {},
+      owners: Map<String, String>.from(data['owners']) ?? {},
+      followers: Map<String, String>.from(data['followers']) ?? {},
       backVisibility: data['backVisibility'] as int ?? null,
       forwardVisibility: data['forwardVisibility'] as int ?? null,
+      createDate: data['createDate'].toDate() as DateTime ?? null,
+      granularity: data['granularity'] as int ?? null,
     );
   }
 
-  String getTimeSlotId(DateTime dt) {
+  String constructTimeSlotId(DateTime dt) {
     return calendarId + Timestamp.fromDate(dt).seconds.toString();
+  }
+
+  DateTime minDate() {
+    return null;
+  }
+
+  DateTime maxDate() {
+    return null;
   }
 }
