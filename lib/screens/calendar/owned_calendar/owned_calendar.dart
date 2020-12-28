@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:blok_p1/constants/testing_constants.dart';
 import 'package:blok_p1/models/calendar.dart';
 import 'package:blok_p1/models/time_slot.dart';
 import 'package:blok_p1/screens/calendar/owned_calendar/owned_calendar_arguments.dart';
@@ -17,24 +18,26 @@ class OwnedCalendar extends StatefulWidget {
 }
 
 class _OwnedCalendarState extends State<OwnedCalendar> {
-  List<TimeRegion> _unavailableTimeSlots() {
-    final DateTime today = DateTime.now();
-    final List<TimeRegion> regions = <TimeRegion>[];
-    regions.add(TimeRegion(
-        startTime: DateTime(today.year, today.month, today.day, 0, 0, 0),
-        endTime: DateTime(today.year, today.month, today.day, 8, 0, 0),
-        enablePointerInteraction: false,
-        color: Colors.grey.withOpacity(0.5),
-        text: ''));
-    regions.add(TimeRegion(
-        startTime: DateTime(today.year, today.month, today.day, 18, 0, 0),
-        endTime: DateTime(today.year, today.month, today.day, 24, 0, 0),
-        enablePointerInteraction: false,
-        color: Colors.grey.withOpacity(0.5),
-        text: ''));
+  TimeSlots timeSlots = new TimeSlots();
 
-    return regions;
-  }
+  // List<TimeRegion> _unavailableTimeSlots() {
+  //   final DateTime today = DateTime.now();
+  //   final List<TimeRegion> regions = <TimeRegion>[];
+  //   regions.add(TimeRegion(
+  //       startTime: DateTime(today.year, today.month, today.day, 0, 0, 0),
+  //       endTime: DateTime(today.year, today.month, today.day, 8, 0, 0),
+  //       enablePointerInteraction: false,
+  //       color: Colors.grey.withOpacity(0.5),
+  //       text: ''));
+  //   regions.add(TimeRegion(
+  //       startTime: DateTime(today.year, today.month, today.day, 18, 0, 0),
+  //       endTime: DateTime(today.year, today.month, today.day, 24, 0, 0),
+  //       enablePointerInteraction: false,
+  //       color: Colors.grey.withOpacity(0.5),
+  //       text: ''));
+
+  //   return regions;
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +57,10 @@ class _OwnedCalendarState extends State<OwnedCalendar> {
       ],
       builder: (context, child) {
         final Calendar calendar = Provider.of<Calendar>(context);
-        final TimeSlots timeSlots = Provider.of<TimeSlots>(context);
+        timeSlots = Provider.of<TimeSlots>(context);
+
+        //print(timeSlots != null ? timeSlots.timeSlots : "nothing");
+
         return Scaffold(
           appBar: AppBar(
             title: Text(calendar == null ? '' : calendar.name),
@@ -63,7 +69,7 @@ class _OwnedCalendarState extends State<OwnedCalendar> {
                   onPressed: () async {
                     await DatabaseService(
                             userId:
-                                "vM6Auusqn2N6zZCj5ow7HnrETq23", // hardcoded for testing for now
+                                testRemoveUserId, // hardcoded for testing for now
                             calendarId: calendar.calendarId)
                         .leaveCalendar();
                   },
@@ -106,17 +112,16 @@ class _OwnedCalendarState extends State<OwnedCalendar> {
                   days: calendar != null ? calendar.backVisibility : 0)),
               maxDate: DateTime(now.year, now.month, now.day).add(Duration(
                   days: calendar != null ? calendar.forwardVisibility : 0)),
-              dataSource: calendar != null
-                  ? MeetingDataSource(
-                      timeSlots.getDataSources(calendar.granularity))
-                  : null,
+              dataSource: timeSlots != null ? timeSlots : null,
               onTap: (CalendarTapDetails details) async {
                 DateTime dt = details.appointments == null
                     ? details.date
                     : details.appointments[0].from;
                 String timeSlotId = calendar.constructTimeSlotId(dt);
 
-                if (timeSlots.timeSlots.containsKey(timeSlotId)) {
+                if (timeSlots == null) {
+                  // do nothing
+                } else if (timeSlots.timeSlots.containsKey(timeSlotId)) {
                   print('found id');
                   int status =
                       timeSlots.timeSlots[timeSlotId].status == 0 ? 1 : 0;

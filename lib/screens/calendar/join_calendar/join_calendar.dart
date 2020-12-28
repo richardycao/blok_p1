@@ -1,3 +1,4 @@
+import 'package:blok_p1/constants/testing_constants.dart';
 import 'package:blok_p1/services/database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -26,7 +27,7 @@ class JoinCalendar extends StatelessWidget {
                   child: Text('Join hard-coded calendar ID'),
                   onPressed: () async {
                     await DatabaseService(userId: user.uid).joinCalendar(
-                        "I7rGeBU5q2qp2Ebs7vh7"); // hardcoded for testing for now
+                        testJoinCalendarId); // hardcoded for testing for now
                   },
                 ),
               ],

@@ -1,7 +1,6 @@
 import 'dart:math';
 
-import 'package:blok_p1/constants/auth_constants.dart';
-import 'package:blok_p1/constants/database_constants.dart';
+import 'package:blok_p1/constants/testing_constants.dart';
 import 'package:blok_p1/models/calendar.dart';
 import 'package:blok_p1/models/time_slot.dart';
 import 'package:blok_p1/models/user.dart';
@@ -48,7 +47,7 @@ class DatabaseService {
           .document(calendarId)
           .collection('timeSlots')
           .snapshots()
-          .map((snapshot) => TimeSlots.fromSnapshot(snapshot));
+          .map((snapshot) => TimeSlots.fromQuerySnapshot(snapshot));
     } catch (e) {
       print(e);
       return null;
@@ -121,8 +120,12 @@ class DatabaseService {
             calendarId + Timestamp.fromDate(ts).seconds.toString();
         await timeSlotsCollection.document(timeSlotId).setData({
           'timeSlotId': timeSlotId,
-          'start': ts,
+          'eventName': null,
           'status': 0,
+          'from': ts,
+          'to': ts.add(Duration(minutes: granularity)),
+          'background': null,
+          'isAllDay': null,
         });
       });
 

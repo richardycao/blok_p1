@@ -37,6 +37,7 @@ class _FollowedCalendarState extends State<FollowedCalendar> {
           final FirebaseUser firebaseUser = Provider.of<FirebaseUser>(context);
           final Calendar calendar = Provider.of<Calendar>(context);
           final TimeSlots timeSlots = Provider.of<TimeSlots>(context);
+
           return Scaffold(
             appBar: AppBar(
               title: Text(calendar == null ? '' : calendar.name),
@@ -72,10 +73,7 @@ class _FollowedCalendarState extends State<FollowedCalendar> {
                     days: calendar != null ? calendar.backVisibility : 0)),
                 maxDate: DateTime(now.year, now.month, now.day).add(Duration(
                     days: calendar != null ? calendar.forwardVisibility : 0)),
-                dataSource: calendar != null
-                    ? MeetingDataSource(
-                        timeSlots.getDataSources(calendar.granularity))
-                    : null,
+                dataSource: timeSlots,
                 onTap: (CalendarTapDetails details) async {
                   DateTime dt = details.appointments == null
                       ? details.date
