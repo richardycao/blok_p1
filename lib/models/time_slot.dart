@@ -73,22 +73,13 @@ class TimeSlots extends CalendarDataSource {
     return TimeSlots.fromDocumentSnapshots(snapshots);
   }
 
-  // TimeSlots update(TimeSlots ts, {int granularity = 60}) {
-  //   ts.timeSlots.entries.forEach((element) {
-  //     timeSlots[element.key] = element.value;
-  //   });
-  //   appointments = timeSlots.entries.map((e) => e.value).toList();
-  //   //return this;
-  // }
-
   // update this.appointments with the document changes
-  // void updateSources(TimeSlots ts, int granularity) {
-  //   ts.timeSlots.entries.forEach((element) {
-  //     timeSlots[element.key] = element.value;
-  //   });
-  //   appointments = timeSlots.entries.map((e) => e.value).toList();
-  //   //return this;
-  // }
+  void updateSources(TimeSlots ts, int granularity) {
+    ts.timeSlots.entries.forEach((element) {
+      timeSlots[element.key] = element.value;
+    });
+    appointments = timeSlots.entries.map((e) => e.value).toList();
+  }
 
   // List<Meeting> getDataSources(int granularity) {
   //   return timeSlots.entries
