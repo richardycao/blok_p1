@@ -26,8 +26,9 @@ class JoinCalendar extends StatelessWidget {
                 ElevatedButton(
                   child: Text('Join hard-coded calendar ID'),
                   onPressed: () async {
-                    await DatabaseService(userId: user.uid).joinCalendar(
-                        testJoinCalendarId); // hardcoded for testing for now
+                    await DatabaseService(
+                            userId: user.uid, calendarId: testJoinCalendarId)
+                        .joinCalendar(); // hardcoded for testing for now
                   },
                 ),
               ],

@@ -79,16 +79,40 @@ class _FollowedCalendarState extends State<FollowedCalendar> {
                       ? details.date
                       : details.appointments[0].from;
                   String timeSlotId = calendar.constructTimeSlotId(dt);
-
-                  if (timeSlots.timeSlots.containsKey(timeSlotId)) {
-                    print('found id');
-                    int status =
-                        timeSlots.timeSlots[timeSlotId].status == 0 ? 1 : 0;
-                    print(status);
-                    await DatabaseService(
-                            calendarId: calendar.calendarId,
-                            timeSlotId: timeSlotId)
-                        .updateTimeSlotData(status: status);
+                  print('====================');
+                  if (timeSlots == null) {
+                    // do nothing
+                  } else if (timeSlots.timeSlots.containsKey(timeSlotId)) {
+                    // if it's a valid time slot
+                    if (timeSlots.timeSlots[timeSlotId].status != 0) {
+                      // if the time slot is available
+                      print('available');
+                      if (timeSlots.timeSlots[timeSlotId].occupants
+                          .containsKey(firebaseUser.uid)) {
+                        // if the user is already an occupant
+                        print('is occupant, now leaving');
+                        await DatabaseService(
+                                userId: firebaseUser.uid,
+                                calendarId: calendar.calendarId,
+                                timeSlotId: timeSlotId)
+                            .leaveTimeSlot();
+                      } else if (timeSlots
+                              .timeSlots[timeSlotId].occupants.length <
+                          timeSlots.timeSlots[timeSlotId].limit) {
+                        // if the user is not yet an occupant and the time slot is not full
+                        print('not occupant, now joining');
+                        await DatabaseService(
+                                userId: firebaseUser.uid,
+                                calendarId: calendar.calendarId,
+                                timeSlotId: timeSlotId)
+                            .joinTimeSlot();
+                      } else {
+                        // if the user tries to join the time slot but it's full
+                        print('not occupant, time slot is full');
+                      }
+                    } else {
+                      print('unavailable');
+                    }
                   } else {
                     print('out of range');
                   }

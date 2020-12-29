@@ -7,6 +7,7 @@ class User {
   Map<String, String> ownedCalendars;
   Map<String, String> followedCalendars;
   bool serverEnabled;
+  Map<String, String> bookings;
 
   User({
     this.userId,
@@ -15,6 +16,7 @@ class User {
     this.ownedCalendars,
     this.followedCalendars,
     this.serverEnabled,
+    this.bookings,
   });
 
   factory User.fromSnapshot(DocumentSnapshot snapshot) {
@@ -28,6 +30,7 @@ class User {
       followedCalendars:
           Map<String, String>.from(data['followedCalendars']) ?? {},
       serverEnabled: data['serverEnabled'] as bool ?? null,
+      bookings: Map<String, String>.from(data['bookings']) ?? {},
     );
   }
 }

@@ -5,26 +5,25 @@ import 'package:syncfusion_flutter_calendar/calendar.dart';
 class TimeSlot {
   final String timeSlotId;
   String eventName;
-  // status: unavailable, open, closed
+  // status: unavailable, available
   int status;
+  Map<String, String> occupants;
+  int limit;
   DateTime from;
-  // start_time: start time
-  //final DateTime startTime;
-  // end_time: end time
-  //           (maybe not necessary since time slots are identified by start time in the sfcalendar.
-  //            the end time is implied by the appointment duration.)
-  // occupants: list of booked Users
-  // limit: max # of people allowed
 
   // Ignore - Required by CalendarDataSource
   DateTime to;
+  // (maybe not necessary since time slots are identified by start time in the sfcalendar.
+  // the end time is implied by the appointment duration.)
   Color background;
   bool isAllDay;
 
   TimeSlot({
     this.timeSlotId,
-    this.status,
     this.eventName,
+    this.status,
+    this.occupants,
+    this.limit,
     this.from,
     this.to,
     this.background,
@@ -50,12 +49,14 @@ class TimeSlots extends CalendarDataSource {
       value: (snap) {
         return TimeSlot(
           timeSlotId: snap.documentID,
-          eventName: snap.data['eventName'] as String ?? snap.documentID,
+          eventName: "", //snap.data['eventName'] as String ?? snap.documentID,
           status: snap.data['status'] as int ?? null,
+          occupants: Map<String, String>.from(snap.data['occupants']) ?? {},
+          limit: snap.data['limit'] as int ?? null,
           from: snap.data['from'].toDate() ?? null,
           to: snap.data['to'].toDate() ?? null,
           background:
-              (snap.data['status'] as int) == 1 ? Colors.red : Colors.white,
+              (snap.data['status'] as int) == 1 ? Colors.white : Colors.grey,
           isAllDay: snap.data['isAllDay'] ?? false,
         );
       },
@@ -74,24 +75,11 @@ class TimeSlots extends CalendarDataSource {
   }
 
   // update this.appointments with the document changes
-  void updateSources(TimeSlots ts, int granularity) {
-    ts.timeSlots.entries.forEach((element) {
-      timeSlots[element.key] = element.value;
-    });
-    appointments = timeSlots.entries.map((e) => e.value).toList();
-  }
-
-  // List<Meeting> getDataSources(int granularity) {
-  //   return timeSlots.entries
-  //       .where((element) => element.value.status == 1)
-  //       .map((entry) {
-  //     return Meeting(
-  //         entry.value.timeSlotId,
-  //         entry.value.startTime,
-  //         entry.value.startTime.add(Duration(minutes: granularity)),
-  //         Colors.red,
-  //         false);
-  //   }).toList();
+  // void updateSources(TimeSlots ts, int granularity) {
+  //   ts.timeSlots.entries.forEach((element) {
+  //     timeSlots[element.key] = element.value;
+  //   });
+  //   appointments = timeSlots.entries.map((e) => e.value).toList();
   // }
 
   @override

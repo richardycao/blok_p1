@@ -7,6 +7,8 @@ import 'package:blok_p1/models/user.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class DatabaseService {
+  final String timeSlotsSub = 'timeSlots';
+
   String userId;
   String calendarId;
   String timeSlotId;
@@ -45,7 +47,7 @@ class DatabaseService {
     try {
       return calendarCollection
           .document(calendarId)
-          .collection('timeSlots')
+          .collection(timeSlotsSub)
           .snapshots()
           .map((snapshot) => TimeSlots.fromQuerySnapshot(snapshot));
     } catch (e) {
@@ -65,6 +67,7 @@ class DatabaseService {
       'ownedCalendars': {},
       'followedCalendars': {},
       'serverEnabled': serverEnabled,
+      'bookings': {},
     });
   }
 
@@ -113,7 +116,7 @@ class DatabaseService {
       CollectionReference timeSlotsCollection = Firestore.instance
           .collection('calendars')
           .document(calendarId)
-          .collection('timeSlots');
+          .collection(timeSlotsSub);
 
       timeSlots.forEach((ts) async {
         String timeSlotId =
@@ -122,6 +125,8 @@ class DatabaseService {
           'timeSlotId': timeSlotId,
           'eventName': null,
           'status': 0,
+          'occupants': {},
+          'limit': testTimeSlotLimit,
           'from': ts,
           'to': ts.add(Duration(minutes: granularity)),
           'background': null,
@@ -143,7 +148,7 @@ class DatabaseService {
   }
 
   // JOIN calendar (sub-category of UPDATE calendar)
-  Future joinCalendar(String calendarId) async {
+  Future joinCalendar() async {
     try {
       DocumentSnapshot calendarSnapshot =
           await calendarCollection.document(calendarId).get();
@@ -213,11 +218,83 @@ class DatabaseService {
   // DELETE calendar
   Future deleteCalendar() async {}
 
+  // JOIN time slot
+  Future joinTimeSlot() async {
+    try {
+      DocumentSnapshot timeSlotSnapshot = await calendarCollection
+          .document(calendarId)
+          .collection(timeSlotsSub)
+          .document(timeSlotId)
+          .get();
+
+      // Adds user to time slot's occupants
+      Map<String, String> occupants =
+          new Map<String, String>.from(timeSlotSnapshot.data['occupants']);
+      print(occupants);
+      occupants[userId] = temp_name;
+      print(occupants);
+      await calendarCollection
+          .document(calendarId)
+          .collection(timeSlotsSub)
+          .document(timeSlotId)
+          .setData({
+        'occupants': occupants,
+      }, merge: true);
+
+      // Updates user's bookings
+      DocumentSnapshot userSnapshot =
+          await userCollection.document(userId).get();
+      final Map<String, String> bookings =
+          new Map<String, String>.from(userSnapshot.data['bookings']);
+      bookings[timeSlotId] = timeSlotSnapshot.data['eventName'] as String;
+      await userCollection.document(userId).setData({
+        'bookings': bookings,
+      }, merge: true);
+    } catch (e) {
+      print(e.toString());
+    }
+  }
+
+  // LEAVE time slot
+  Future leaveTimeSlot() async {
+    try {
+      DocumentSnapshot timeSlotSnapshot = await calendarCollection
+          .document(calendarId)
+          .collection(timeSlotsSub)
+          .document(timeSlotId)
+          .get();
+
+      // Updates user's bookings
+      DocumentSnapshot userSnapshot =
+          await userCollection.document(userId).get();
+      final Map<String, String> bookings =
+          new Map<String, String>.from(userSnapshot.data['bookings']);
+      bookings.remove(timeSlotId);
+      await userCollection.document(userId).setData({
+        'bookings': bookings,
+      }, merge: true);
+
+      // Removes user to time slot's occupants
+      Map<String, String> occupants =
+          new Map<String, String>.from(timeSlotSnapshot.data['occupants']);
+      occupants.remove(userId);
+      await calendarCollection
+          .document(calendarId)
+          .collection(timeSlotsSub)
+          .document(timeSlotId)
+          .setData({
+        'occupants': occupants,
+      }, merge: true);
+    } catch (e) {
+      print(e.toString());
+    }
+  }
+
   // UPDATE time slot data
   Future updateTimeSlotData({int status}) async {
     await calendarCollection
         .document(calendarId)
-        .collection('timeSlots')
+        .collection(timeSlotsSub)
         .document(timeSlotId)
         .setData({
       if (status != null) 'status': status,
