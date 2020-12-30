@@ -1,3 +1,4 @@
+import 'package:blok_p1/models/calendar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
@@ -40,7 +41,8 @@ class TimeSlots extends CalendarDataSource {
     this.timeSlots = timeSlots ?? {};
   }
 
-  factory TimeSlots.fromDocumentSnapshots(List<DocumentSnapshot> snapshots) {
+  factory TimeSlots.fromDocumentSnapshots(
+      List<DocumentSnapshot> snapshots, CalendarType type) {
     snapshots = snapshots ?? {};
     return TimeSlots(
         timeSlots: Map.fromIterable(
@@ -55,23 +57,28 @@ class TimeSlots extends CalendarDataSource {
           limit: snap.data['limit'] as int ?? null,
           from: snap.data['from'].toDate() ?? null,
           to: snap.data['to'].toDate() ?? null,
-          background:
-              (snap.data['status'] as int) == 1 ? Colors.white : Colors.grey,
+          background: (snap.data['status'] as int) == 0
+              ? Colors.grey
+              : snap.data['occupants'].length > 0
+                  ? Colors.red
+                  : Colors.white,
           isAllDay: snap.data['isAllDay'] ?? false,
         );
       },
     ));
   }
 
-  factory TimeSlots.fromQuerySnapshot(QuerySnapshot querySnapshot) {
+  factory TimeSlots.fromQuerySnapshot(
+      QuerySnapshot querySnapshot, CalendarType type) {
     List<DocumentSnapshot> snapshots = querySnapshot.documents.toList();
-    return TimeSlots.fromDocumentSnapshots(snapshots);
+    return TimeSlots.fromDocumentSnapshots(snapshots, type);
   }
 
-  factory TimeSlots.fromDocumentChanges(List<DocumentChange> documentChanges) {
+  factory TimeSlots.fromDocumentChanges(
+      List<DocumentChange> documentChanges, CalendarType type) {
     List<DocumentSnapshot> snapshots =
         documentChanges.map((dc) => dc.document).toList();
-    return TimeSlots.fromDocumentSnapshots(snapshots);
+    return TimeSlots.fromDocumentSnapshots(snapshots, type);
   }
 
   // update this.appointments with the document changes

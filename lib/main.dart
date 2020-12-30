@@ -33,8 +33,8 @@ class MyApp extends StatelessWidget {
     '/calendar': (context) => Wrapper(),
     CreateCalendar.route: (context) => CreateCalendar(),
     JoinCalendar.route: (context) => JoinCalendar(),
-    OwnedCalendar.route: (context) => OwnedCalendar(),
-    FollowedCalendar.route: (context) => FollowedCalendar(),
+    OwnedCalendarPage.route: (context) => OwnedCalendarPage(),
+    FollowedCalendarPage.route: (context) => FollowedCalendarPage(),
     '/calendar/:id/details': (context) => Home(),
   };
 

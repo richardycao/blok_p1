@@ -5,12 +5,12 @@ import 'package:blok_p1/screens/home/tabs/owned_tab/owned_calendar_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class OwnedCalendars extends StatefulWidget {
+class OwnedCalendarsTab extends StatefulWidget {
   @override
-  _OwnedCalendarsState createState() => _OwnedCalendarsState();
+  _OwnedCalendarsTabState createState() => _OwnedCalendarsTabState();
 }
 
-class _OwnedCalendarsState extends State<OwnedCalendars> {
+class _OwnedCalendarsTabState extends State<OwnedCalendarsTab> {
   @override
   Widget build(BuildContext context) {
     final User user = Provider.of<User>(context);

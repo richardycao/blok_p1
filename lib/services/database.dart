@@ -1,13 +1,20 @@
-import 'dart:math';
-
 import 'package:blok_p1/constants/testing_constants.dart';
 import 'package:blok_p1/models/calendar.dart';
+import 'package:blok_p1/models/followed_calendar.dart';
 import 'package:blok_p1/models/time_slot.dart';
 import 'package:blok_p1/models/user.dart';
+import 'package:blok_p1/screens/home/tabs/followed_tab/followed_tab.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class DatabaseService {
-  final String timeSlotsSub = 'timeSlots';
+  static const String USERS = 'users';
+  static const String CALENDARS = 'calendars';
+  static const String TIMESLOTS = 'timeSlots';
+  //static const String FOLLOWED_CALENDARS = 'followedCalendars';
+
+  //final String timeSlotsSub = 'timeSlots';
+  //final String followedCalendarsSub = 'followedCalendars';
+  //final String ownedCalendarsSub = 'ownedCalendars';
 
   String userId;
   String calendarId;
@@ -15,9 +22,9 @@ class DatabaseService {
   DatabaseService({this.userId, this.calendarId, this.timeSlotId});
 
   final CollectionReference userCollection =
-      Firestore.instance.collection('users');
+      Firestore.instance.collection(USERS);
   final CollectionReference calendarCollection =
-      Firestore.instance.collection('calendars');
+      Firestore.instance.collection(CALENDARS);
 
   Stream<User> streamUser() {
     try {
@@ -43,25 +50,38 @@ class DatabaseService {
     }
   }
 
-  Stream<TimeSlots> streamTimeSlots() {
+  Stream<TimeSlots> streamTimeSlots(CalendarType type) {
     try {
       return calendarCollection
           .document(calendarId)
-          .collection(timeSlotsSub)
+          .collection(TIMESLOTS)
           .snapshots()
-          .map((snapshot) => TimeSlots.fromQuerySnapshot(snapshot));
+          .map((snapshot) => TimeSlots.fromQuerySnapshot(snapshot, type));
     } catch (e) {
       print(e);
       return null;
     }
   }
 
+  // Stream<FollowedCalendars> streamUserCalendars() {
+  //   try {
+  //     return userCollection
+  //         .document(userId)
+  //         .collection(FOLLOWED_CALENDARS)
+  //         .snapshots()
+  //         .map((snapshot) => FollowedCalendars.fromQuerySnapshot(snapshot));
+  //   } catch (e) {
+  //     print(e);
+  //     return null;
+  //   }
+  // }
+
   // CREATE user
   Future createUser(
       {String displayName = anon_name,
       String email,
       bool serverEnabled = false}) async {
-    return await userCollection.document(userId).setData({
+    await userCollection.document(userId).setData({
       'displayName': displayName,
       'email': email,
       'ownedCalendars': {},
@@ -69,6 +89,10 @@ class DatabaseService {
       'serverEnabled': serverEnabled,
       'bookings': {},
     });
+    // CollectionReference timeSlotsCollection = Firestore.instance
+    //       .collection('calendars')
+    //       .document(calendarId)
+    //       .collection(timeSlotsSub);
   }
 
   // UPDATE user data
@@ -113,16 +137,14 @@ class DatabaseService {
           (i) => DateTime(
               start.year, start.month, start.day, start.hour + (i), 0, 0));
 
-      CollectionReference timeSlotsCollection = Firestore.instance
-          .collection('calendars')
-          .document(calendarId)
-          .collection(timeSlotsSub);
+      CollectionReference timeSlotsCollection =
+          calendarCollection.document(calendarId).collection(TIMESLOTS);
 
       timeSlots.forEach((ts) async {
         String timeSlotId =
             calendarId + Timestamp.fromDate(ts).seconds.toString();
         await timeSlotsCollection.document(timeSlotId).setData({
-          'timeSlotId': timeSlotId,
+          //'timeSlotId': timeSlotId,
           'eventName': null,
           'status': 0,
           'occupants': {},
@@ -170,6 +192,14 @@ class DatabaseService {
       await userCollection.document(userId).setData({
         'followedCalendars': followedCalendars,
       }, merge: true);
+      // await userCollection
+      //     .document(userId)
+      //     .collection(FOLLOWED_CALENDARS)
+      //     .document(calendarId)
+      //     .setData({
+      //   'name': calendarSnapshot.data['name'],
+      //   'timeSlots': {},
+      // });
     } catch (e) {
       print(e.toString());
     }
@@ -180,26 +210,96 @@ class DatabaseService {
   // uses calendarId of the followed calendar from the Provider
   Future leaveCalendar() async {
     try {
+      DocumentSnapshot userSnapshot =
+          await userCollection.document(userId).get();
       DocumentSnapshot calendarSnapshot =
           await calendarCollection.document(calendarId).get();
 
-      // Updates user's followed calendars
-      DocumentSnapshot userSnapshot =
-          await userCollection.document(userId).get();
+      // Remove user from all the calendar's time slots
+      List<String> timeSlotIdsToClear =
+          Map<String, String>.from(userSnapshot.data['bookings'])
+              .entries
+              .where((element) => element.value == calendarId)
+              .map((element) => element.key)
+              .toList();
+      print(timeSlotIdsToClear);
+      timeSlotIdsToClear.forEach((tsId) async {
+        DocumentSnapshot timeSlotSnapshot = await calendarCollection
+            .document(calendarId)
+            .collection(TIMESLOTS)
+            .document(tsId)
+            .get();
+        print(timeSlotSnapshot.documentID);
+        final Map<String, String> occupants =
+            new Map<String, String>.from(timeSlotSnapshot.data['occupants']);
+        print(occupants);
+        occupants.remove(userId);
+        print(occupants);
+        await calendarCollection
+            .document(calendarId)
+            .collection(TIMESLOTS)
+            .document(tsId)
+            .setData({
+          'occupants': occupants,
+        }, merge: true);
+      });
+      print('1');
+      // DocumentSnapshot followedSnapshot = await userCollection
+      //     .document(userId)
+      //     .collection(FOLLOWED_CALENDARS)
+      //     .document(calendarId)
+      //     .get();
+      // List<String> timeSlotIdsToDelete = followedSnapshot
+      //     .data['timeSlots'].entries
+      //     .map((entry) => entry.key as String)
+      //     .toList();
+      // timeSlotIdsToDelete.forEach((tsId) async {
+      //   DocumentSnapshot timeSlotInCalendarSnapshot = await calendarCollection
+      //       .document(calendarId)
+      //       .collection(TIMESLOTS)
+      //       .document(tsId)
+      //       .get();
+      //   Map<String, String> occupants = new Map<String, String>.from(
+      //       timeSlotInCalendarSnapshot.data['occupants']);
+      //   occupants.remove(userId);
+      //   await calendarCollection
+      //       .document(calendarId)
+      //       .collection(TIMESLOTS)
+      //       .document(tsId)
+      //       .setData({
+      //     'occupants': occupants,
+      //   }, merge: true);
+      // });
+
+      // Updates user's followed calendars and bookings
+      Map<String, String> bookings =
+          new Map<String, String>.from(userSnapshot.data['bookings']);
       final Map<String, String> followedCalendars =
           new Map<String, String>.from(userSnapshot.data['followedCalendars']);
+      bookings = Map<String, String>.fromEntries(
+          bookings.entries.where((element) => element.value != calendarId));
       followedCalendars.remove(calendarId);
       await userCollection.document(userId).setData({
+        'bookings': bookings,
         'followedCalendars': followedCalendars,
       }, merge: true);
+      print('2');
+      // await userCollection
+      //     .document(userId)
+      //     .collection(FOLLOWED_CALENDARS)
+      //     .document(calendarId)
+      //     .delete();
 
       // Removes user from calendar's list of followers
       Map<String, String> followers =
           new Map<String, String>.from(calendarSnapshot.data['followers']);
+      print(followers);
       followers.remove(userId);
+      print(followers);
       await calendarCollection.document(calendarId).setData({
         'followers': followers,
       }, merge: true);
+      print('3');
     } catch (e) {
       print(e.toString());
     }
@@ -219,23 +319,21 @@ class DatabaseService {
   Future deleteCalendar() async {}
 
   // JOIN time slot
-  Future joinTimeSlot() async {
+  Future joinTimeSlot(String name) async {
     try {
       DocumentSnapshot timeSlotSnapshot = await calendarCollection
           .document(calendarId)
-          .collection(timeSlotsSub)
+          .collection(TIMESLOTS)
           .document(timeSlotId)
           .get();
 
       // Adds user to time slot's occupants
       Map<String, String> occupants =
           new Map<String, String>.from(timeSlotSnapshot.data['occupants']);
-      print(occupants);
-      occupants[userId] = temp_name;
-      print(occupants);
+      occupants[userId] = name;
       await calendarCollection
           .document(calendarId)
-          .collection(timeSlotsSub)
+          .collection(TIMESLOTS)
           .document(timeSlotId)
           .setData({
         'occupants': occupants,
@@ -246,10 +344,26 @@ class DatabaseService {
           await userCollection.document(userId).get();
       final Map<String, String> bookings =
           new Map<String, String>.from(userSnapshot.data['bookings']);
-      bookings[timeSlotId] = timeSlotSnapshot.data['eventName'] as String;
+      bookings[timeSlotId] =
+          calendarId; //timeSlotSnapshot.data['eventName'] as String;
       await userCollection.document(userId).setData({
         'bookings': bookings,
       }, merge: true);
+      // DocumentSnapshot followedSnapshot = await userCollection
+      //     .document(userId)
+      //     .collection(FOLLOWED_CALENDARS)
+      //     .document(calendarId)
+      //     .get();
+      // final Map<String, String> timeSlots =
+      //     new Map<String, String>.from(followedSnapshot.data['timeSlots']);
+      // timeSlots[timeSlotId] = name;
+      // await userCollection
+      //     .document(userId)
+      //     .collection(FOLLOWED_CALENDARS)
+      //     .document(calendarId)
+      //     .setData({
+      //   'timeSlots': timeSlots,
+      // }, merge: true);
     } catch (e) {
       print(e.toString());
     }
@@ -260,7 +374,7 @@ class DatabaseService {
     try {
       DocumentSnapshot timeSlotSnapshot = await calendarCollection
           .document(calendarId)
-          .collection(timeSlotsSub)
+          .collection(TIMESLOTS)
           .document(timeSlotId)
           .get();
 
@@ -273,6 +387,21 @@ class DatabaseService {
       await userCollection.document(userId).setData({
         'bookings': bookings,
       }, merge: true);
+      // DocumentSnapshot followedSnapshot = await userCollection
+      //     .document(userId)
+      //     .collection(FOLLOWED_CALENDARS)
+      //     .document(calendarId)
+      //     .get();
+      // final Map<String, String> timeSlots =
+      //     new Map<String, String>.from(followedSnapshot.data['timeSlots']);
+      // timeSlots.remove(timeSlotId);
+      // await userCollection
+      //     .document(userId)
+      //     .collection(FOLLOWED_CALENDARS)
+      //     .document(calendarId)
+      //     .setData({
+      //   'timeSlots': timeSlots,
+      // }, merge: true);
 
       // Removes user to time slot's occupants
       Map<String, String> occupants =
@@ -280,7 +409,57 @@ class DatabaseService {
       occupants.remove(userId);
       await calendarCollection
           .document(calendarId)
-          .collection(timeSlotsSub)
+          .collection(TIMESLOTS)
+          .document(timeSlotId)
+          .setData({
+        'occupants': occupants,
+      }, merge: true);
+    } catch (e) {
+      print(e.toString());
+    }
+  }
+
+  // KICK from time slot
+  Future kickFromTimeSlot(String kickedUserId) async {
+    try {
+      DocumentSnapshot timeSlotSnapshot = await calendarCollection
+          .document(calendarId)
+          .collection(TIMESLOTS)
+          .document(timeSlotId)
+          .get();
+
+      // Updates user's bookings
+      DocumentSnapshot userSnapshot =
+          await userCollection.document(kickedUserId).get();
+      final Map<String, String> bookings =
+          new Map<String, String>.from(userSnapshot.data['bookings']);
+      bookings.remove(timeSlotId);
+      await userCollection.document(kickedUserId).setData({
+        'bookings': bookings,
+      }, merge: true);
+      // DocumentSnapshot followedSnapshot = await userCollection
+      //     .document(kickedUserId)
+      //     .collection(FOLLOWED_CALENDARS)
+      //     .document(calendarId)
+      //     .get();
+      // final Map<String, String> timeSlots =
+      //     new Map<String, String>.from(followedSnapshot.data['timeSlots']);
+      // timeSlots.remove(timeSlotId);
+      // await userCollection
+      //     .document(kickedUserId)
+      //     .collection(FOLLOWED_CALENDARS)
+      //     .document(calendarId)
+      //     .setData({
+      //   'timeSlots': timeSlots,
+      // }, merge: true);
+
+      // Removes user to time slot's occupants
+      Map<String, String> occupants =
+          new Map<String, String>.from(timeSlotSnapshot.data['occupants']);
+      occupants.remove(kickedUserId);
+      await calendarCollection
+          .document(calendarId)
+          .collection(TIMESLOTS)
           .document(timeSlotId)
           .setData({
         'occupants': occupants,
@@ -292,9 +471,22 @@ class DatabaseService {
 
   // UPDATE time slot data
   Future updateTimeSlotData({int status}) async {
+    if (status == 0) {
+      DocumentSnapshot snapshot = await calendarCollection
+          .document(calendarId)
+          .collection(TIMESLOTS)
+          .document(timeSlotId)
+          .get();
+      Map<String, String> occupants =
+          Map<String, String>.from(snapshot.data['occupants']);
+      // leave time slot for each occupant
+      occupants.forEach((key, value) async {
+        await kickFromTimeSlot(key);
+      });
+    }
     await calendarCollection
         .document(calendarId)
-        .collection(timeSlotsSub)
+        .collection(TIMESLOTS)
         .document(timeSlotId)
         .setData({
       if (status != null) 'status': status,

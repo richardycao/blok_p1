@@ -14,7 +14,7 @@ class Tabs {
     _tabs = [
       Tab(
         title: Text('Calendars'),
-        page: OwnedCalendars(),
+        page: OwnedCalendarsTab(),
         icon: Icon(Icons.calendar_today),
         label: 'Calendars',
         floatingRoute: CreateCalendar.route,
@@ -22,7 +22,7 @@ class Tabs {
       ),
       Tab(
         title: Text('Events'),
-        page: FollowedCalendars(),
+        page: FollowedCalendarsTab(),
         icon: Icon(Icons.event_note),
         label: 'Events',
         floatingRoute: JoinCalendar.route,

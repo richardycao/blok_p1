@@ -1,5 +1,6 @@
-import 'package:blok_p1/models/time_slot.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+
+enum CalendarType { OWNER, CLIENT }
 
 class Calendar {
   final String calendarId;

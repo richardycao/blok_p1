@@ -21,7 +21,7 @@ class OwnedCalendarTile extends StatelessWidget {
           title: Text(calendarDetails.name),
           //subtitle: Text(calendar.description),
           onTap: () {
-            Navigator.pushNamed(context, OwnedCalendar.route,
+            Navigator.pushNamed(context, OwnedCalendarPage.route,
                 arguments: OwnedCalendarArguments(
                     calendarId: calendarDetails.calendarId));
           },

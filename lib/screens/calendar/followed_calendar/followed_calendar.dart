@@ -7,14 +7,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 
-class FollowedCalendar extends StatefulWidget {
+class FollowedCalendarPage extends StatefulWidget {
   static const route = '/calendar/followed';
 
   @override
-  _FollowedCalendarState createState() => _FollowedCalendarState();
+  _FollowedCalendarPageState createState() => _FollowedCalendarPageState();
 }
 
-class _FollowedCalendarState extends State<FollowedCalendar> {
+class _FollowedCalendarPageState extends State<FollowedCalendarPage> {
   @override
   Widget build(BuildContext context) {
     final FollowedCalendarArguments args =
@@ -29,8 +29,8 @@ class _FollowedCalendarState extends State<FollowedCalendar> {
                 DatabaseService(calendarId: args.calendarId).streamCalendar(),
           ),
           StreamProvider<TimeSlots>.value(
-            value:
-                DatabaseService(calendarId: args.calendarId).streamTimeSlots(),
+            value: DatabaseService(calendarId: args.calendarId)
+                .streamTimeSlots(CalendarType.CLIENT),
           )
         ],
         builder: (context, child) {
@@ -86,30 +86,65 @@ class _FollowedCalendarState extends State<FollowedCalendar> {
                     // if it's a valid time slot
                     if (timeSlots.timeSlots[timeSlotId].status != 0) {
                       // if the time slot is available
-                      print('available');
-                      if (timeSlots.timeSlots[timeSlotId].occupants
-                          .containsKey(firebaseUser.uid)) {
-                        // if the user is already an occupant
-                        print('is occupant, now leaving');
-                        await DatabaseService(
-                                userId: firebaseUser.uid,
-                                calendarId: calendar.calendarId,
-                                timeSlotId: timeSlotId)
-                            .leaveTimeSlot();
-                      } else if (timeSlots
-                              .timeSlots[timeSlotId].occupants.length <
-                          timeSlots.timeSlots[timeSlotId].limit) {
-                        // if the user is not yet an occupant and the time slot is not full
-                        print('not occupant, now joining');
-                        await DatabaseService(
-                                userId: firebaseUser.uid,
-                                calendarId: calendar.calendarId,
-                                timeSlotId: timeSlotId)
-                            .joinTimeSlot();
-                      } else {
-                        // if the user tries to join the time slot but it's full
-                        print('not occupant, time slot is full');
-                      }
+                      showModalBottomSheet(
+                          context: context,
+                          builder: (context) {
+                            return Container(
+                              child: Column(
+                                children: [
+                                  Text(
+                                      "Occupants: ${timeSlots.timeSlots[timeSlotId].occupants.length} / ${timeSlots.timeSlots[timeSlotId].limit}"),
+                                  RaisedButton(
+                                      child: timeSlots
+                                              .timeSlots[timeSlotId].occupants
+                                              .containsKey(firebaseUser.uid)
+                                          ? Text('Leave')
+                                          : timeSlots.timeSlots[timeSlotId]
+                                                      .occupants.length <
+                                                  timeSlots
+                                                      .timeSlots[timeSlotId]
+                                                      .limit
+                                              ? Text('Join')
+                                              : Text("it's full"),
+                                      onPressed: () async {
+                                        if (timeSlots
+                                            .timeSlots[timeSlotId].occupants
+                                            .containsKey(firebaseUser.uid)) {
+                                          // if the user is already an occupant
+                                          print('is occupant, now leaving');
+                                          await DatabaseService(
+                                                  userId: firebaseUser.uid,
+                                                  calendarId:
+                                                      calendar.calendarId,
+                                                  timeSlotId: timeSlotId)
+                                              .leaveTimeSlot();
+                                        } else if (timeSlots
+                                                .timeSlots[timeSlotId]
+                                                .occupants
+                                                .length <
+                                            timeSlots
+                                                .timeSlots[timeSlotId].limit) {
+                                          // if the user is not yet an occupant and the time slot is not full
+                                          print('not occupant, now joining');
+                                          await DatabaseService(
+                                                  userId: firebaseUser.uid,
+                                                  calendarId:
+                                                      calendar.calendarId,
+                                                  timeSlotId: timeSlotId)
+                                              .joinTimeSlot(timeSlots
+                                                  .timeSlots[timeSlotId]
+                                                  .eventName);
+                                        } else {
+                                          // if the user tries to join the time slot but it's full
+                                          print(
+                                              'not occupant, time slot is full');
+                                        }
+                                        Navigator.pop(context);
+                                      }),
+                                ],
+                              ),
+                            );
+                          });
                     } else {
                       print('unavailable');
                     }

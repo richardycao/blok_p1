@@ -10,33 +10,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 
-class OwnedCalendar extends StatefulWidget {
+class OwnedCalendarPage extends StatefulWidget {
   static const route = '/calendar/owned';
 
   @override
-  _OwnedCalendarState createState() => _OwnedCalendarState();
+  _OwnedCalendarPageState createState() => _OwnedCalendarPageState();
 }
 
-class _OwnedCalendarState extends State<OwnedCalendar> {
-  // List<TimeRegion> _unavailableTimeSlots() {
-  //   final DateTime today = DateTime.now();
-  //   final List<TimeRegion> regions = <TimeRegion>[];
-  //   regions.add(TimeRegion(
-  //       startTime: DateTime(today.year, today.month, today.day, 0, 0, 0),
-  //       endTime: DateTime(today.year, today.month, today.day, 8, 0, 0),
-  //       enablePointerInteraction: false,
-  //       color: Colors.grey.withOpacity(0.5),
-  //       text: ''));
-  //   regions.add(TimeRegion(
-  //       startTime: DateTime(today.year, today.month, today.day, 18, 0, 0),
-  //       endTime: DateTime(today.year, today.month, today.day, 24, 0, 0),
-  //       enablePointerInteraction: false,
-  //       color: Colors.grey.withOpacity(0.5),
-  //       text: ''));
-
-  //   return regions;
-  // }
-
+class _OwnedCalendarPageState extends State<OwnedCalendarPage> {
   @override
   Widget build(BuildContext context) {
     final OwnedCalendarArguments args =
@@ -50,7 +31,8 @@ class _OwnedCalendarState extends State<OwnedCalendar> {
           value: DatabaseService(calendarId: args.calendarId).streamCalendar(),
         ),
         StreamProvider<TimeSlots>.value(
-          value: DatabaseService(calendarId: args.calendarId).streamTimeSlots(),
+          value: DatabaseService(calendarId: args.calendarId)
+              .streamTimeSlots(CalendarType.OWNER),
         )
       ],
       builder: (context, child) {
