@@ -5,12 +5,7 @@ import 'package:blok_p1/screens/home/tabs/followed_tab/followed_calendar_tile.da
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class FollowedCalendarsTab extends StatefulWidget {
-  @override
-  _FollowedCalendarsTabState createState() => _FollowedCalendarsTabState();
-}
-
-class _FollowedCalendarsTabState extends State<FollowedCalendarsTab> {
+class FollowedCalendarsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final User user = Provider.of<User>(context);

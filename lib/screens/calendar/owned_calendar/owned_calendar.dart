@@ -10,14 +10,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 
-class OwnedCalendarPage extends StatefulWidget {
+class OwnedCalendarPage extends StatelessWidget {
   static const route = '/calendar/owned';
-
-  @override
-  _OwnedCalendarPageState createState() => _OwnedCalendarPageState();
-}
-
-class _OwnedCalendarPageState extends State<OwnedCalendarPage> {
   @override
   Widget build(BuildContext context) {
     final OwnedCalendarArguments args =

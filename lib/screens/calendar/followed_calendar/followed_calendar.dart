@@ -7,14 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 
-class FollowedCalendarPage extends StatefulWidget {
+class FollowedCalendarPage extends StatelessWidget {
   static const route = '/calendar/followed';
 
-  @override
-  _FollowedCalendarPageState createState() => _FollowedCalendarPageState();
-}
-
-class _FollowedCalendarPageState extends State<FollowedCalendarPage> {
   @override
   Widget build(BuildContext context) {
     final FollowedCalendarArguments args =

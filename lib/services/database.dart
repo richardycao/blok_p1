@@ -106,7 +106,7 @@ class DatabaseService {
   }
 
   // CREATE calendar
-  Future createCalendar(String name,
+  Future<String> createCalendar(String name,
       {String description = calendar_description,
       int backVisiblity = -1,
       int forwardVisibility = 2,
@@ -126,7 +126,7 @@ class DatabaseService {
         'createDate': now,
         'granularity': granularity,
       });
-      String calendarId = docRef.documentID;
+      String newCalendarId = docRef.documentID;
 
       // Add time slots
       DateTime start = today.add(Duration(days: backVisiblity));
@@ -138,11 +138,11 @@ class DatabaseService {
               start.year, start.month, start.day, start.hour + (i), 0, 0));
 
       CollectionReference timeSlotsCollection =
-          calendarCollection.document(calendarId).collection(TIMESLOTS);
+          calendarCollection.document(newCalendarId).collection(TIMESLOTS);
 
       timeSlots.forEach((ts) async {
         String timeSlotId =
-            calendarId + Timestamp.fromDate(ts).seconds.toString();
+            newCalendarId + Timestamp.fromDate(ts).seconds.toString();
         await timeSlotsCollection.document(timeSlotId).setData({
           //'timeSlotId': timeSlotId,
           'eventName': null,
@@ -160,12 +160,15 @@ class DatabaseService {
       DocumentSnapshot snapshot = await userCollection.document(userId).get();
       final Map<String, String> ownedCalendars =
           new Map<String, String>.from(snapshot.data['ownedCalendars']);
-      ownedCalendars[calendarId] = name;
+      ownedCalendars[newCalendarId] = name;
       await userCollection.document(userId).setData({
         'ownedCalendars': ownedCalendars,
       }, merge: true);
+
+      return newCalendarId;
     } catch (e) {
       print(e.toString());
+      return null;
     }
   }
 

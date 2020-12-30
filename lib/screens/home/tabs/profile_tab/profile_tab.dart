@@ -1,6 +1,8 @@
 import 'package:blok_p1/models/user.dart';
+import 'package:blok_p1/screens/authenticate/convert/convert.dart';
 import 'package:blok_p1/screens/common/loading.dart';
 import 'package:blok_p1/screens/home/tabs/profile_tab/profile_info_card.dart';
+import 'package:blok_p1/services/auth.dart';
 import 'package:blok_p1/services/database.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -14,6 +16,7 @@ class Profile extends StatefulWidget {
 }
 
 class _ProfileState extends State<Profile> {
+  final AuthService _auth = AuthService();
   @override
   Widget build(BuildContext context) {
     final User user = Provider.of<User>(context);
@@ -47,6 +50,20 @@ class _ProfileState extends State<Profile> {
                       .updateUserData(serverEnabled: result);
                 }),
           ),
+        if (user.email == null)
+          FlatButton.icon(
+              onPressed: () {
+                Navigator.pushNamed(context, Convert.route);
+              },
+              icon: Icon(Icons.arrow_circle_up),
+              label: Text('Convert to permanent account')),
+        if (user.email != null)
+          FlatButton.icon(
+              onPressed: () async {
+                await _auth.signOut();
+              },
+              icon: Icon(Icons.person),
+              label: Text('Logout')),
       ],
     );
   }
