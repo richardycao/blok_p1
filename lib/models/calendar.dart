@@ -43,7 +43,7 @@ class Calendar {
   }
 
   String constructTimeSlotId(DateTime dt) {
-    return calendarId + Timestamp.fromDate(dt).seconds.toString();
+    return calendarId + "-" + Timestamp.fromDate(dt).seconds.toString();
   }
 
   DateTime minDate() {

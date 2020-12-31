@@ -1,17 +1,22 @@
-import 'dart:math';
-
-import 'package:blok_p1/constants/testing_constants.dart';
 import 'package:blok_p1/models/calendar.dart';
 import 'package:blok_p1/models/time_slot.dart';
+import 'package:blok_p1/models/user.dart';
 import 'package:blok_p1/screens/calendar/owned_calendar/owned_calendar_arguments.dart';
+import 'package:blok_p1/screens/calendar/owned_calendar/owned_calendar_follower_tile.dart';
 import 'package:blok_p1/services/database.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 
-class OwnedCalendarPage extends StatelessWidget {
+class OwnedCalendarPage extends StatefulWidget {
   static const route = '/calendar/owned';
+  @override
+  _OwnedCalendarPageState createState() => _OwnedCalendarPageState();
+}
+
+class _OwnedCalendarPageState extends State<OwnedCalendarPage> {
+  bool isEditing = false;
+
   @override
   Widget build(BuildContext context) {
     final OwnedCalendarArguments args =
@@ -35,34 +40,56 @@ class OwnedCalendarPage extends StatelessWidget {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text(calendar == null ? '' : calendar.name),
-            actions: <Widget>[
-              FlatButton.icon(
-                  onPressed: () async {
-                    await DatabaseService(
-                            userId:
-                                testRemoveUserId, // hardcoded for testing for now
-                            calendarId: calendar.calendarId)
-                        .leaveCalendar();
-                  },
-                  icon: Icon(Icons.arrow_circle_up),
-                  label: Text('remU')), // remove hardcoded user
-              FlatButton.icon(
-                  onPressed: () async {
-                    await DatabaseService(calendarId: calendar.calendarId)
-                        .updateCalendarData(
-                            description:
-                                Random.secure().nextInt(10000).toString());
-                  },
-                  icon: Icon(Icons.arrow_circle_up),
-                  label: Text(
-                      'upd')), // update calendar description with random number
-              FlatButton.icon(
-                  onPressed: () async {
-                    // delete the calendar and pop from navigator
-                  },
-                  icon: Icon(Icons.delete),
-                  label: Text('del')), // delete calendar
+            title: Text(calendar == null
+                ? ''
+                : isEditing
+                    ? 'Editing: ' + calendar.name
+                    : calendar.name),
+            actions: [
+              SizedBox(
+                width: 50.0,
+                child: FlatButton(
+                    onPressed: () async {
+                      // get the followers here
+                      List<User> followers = calendar != null
+                          ? calendar.followers.entries
+                              .map((e) =>
+                                  User(userId: e.key, displayName: e.value))
+                              .toList()
+                          : [];
+                      showModalBottomSheet(
+                          context: context,
+                          builder: (context) {
+                            return ListView.builder(
+                              itemCount: followers.length,
+                              itemBuilder: (context, index) {
+                                return OwnedCalendarFollowerTile(
+                                    user: followers[index],
+                                    calendarId: calendar.calendarId);
+                              },
+                            );
+                          });
+                    },
+                    child: Icon(
+                      Icons.people,
+                      size: 25.0,
+                    )),
+              ),
+              SizedBox(
+                width: 70.0,
+                child: FlatButton(
+                    onPressed: () {
+                      setState(() {
+                        isEditing = !isEditing;
+                      });
+                    },
+                    child: isEditing
+                        ? Icon(
+                            Icons.edit_off,
+                            size: 25.0,
+                          )
+                        : Icon(Icons.edit, size: 25.0)),
+              ),
             ],
           ),
           body: Container(
@@ -85,25 +112,27 @@ class OwnedCalendarPage extends StatelessWidget {
               maxDate: DateTime(now.year, now.month, now.day).add(Duration(
                   days: calendar != null ? calendar.forwardVisibility : 0)),
               dataSource: timeSlots,
-              onTap: (CalendarTapDetails details) async {
-                DateTime dt = details.appointments == null
-                    ? details.date
-                    : details.appointments[0].from;
-                String timeSlotId = calendar.constructTimeSlotId(dt);
+              onTap: isEditing == false
+                  ? null
+                  : (CalendarTapDetails details) async {
+                      DateTime dt = details.appointments == null
+                          ? details.date
+                          : details.appointments[0].from;
+                      String timeSlotId = calendar.constructTimeSlotId(dt);
 
-                if (timeSlots == null) {
-                  // do nothing
-                } else if (timeSlots.timeSlots.containsKey(timeSlotId)) {
-                  int status =
-                      timeSlots.timeSlots[timeSlotId].status == 0 ? 1 : 0;
-                  await DatabaseService(
-                          calendarId: calendar.calendarId,
-                          timeSlotId: timeSlotId)
-                      .updateTimeSlotData(status: status);
-                } else {
-                  print('out of range');
-                }
-              },
+                      if (timeSlots == null) {
+                        // do nothing
+                      } else if (timeSlots.timeSlots.containsKey(timeSlotId)) {
+                        int status =
+                            timeSlots.timeSlots[timeSlotId].status == 0 ? 1 : 0;
+                        await DatabaseService(
+                                calendarId: calendar.calendarId,
+                                timeSlotId: timeSlotId)
+                            .updateTimeSlotData(status: status);
+                      } else {
+                        print('out of range');
+                      }
+                    },
               view: CalendarView.day, // move this to calendar settings later
               //specialRegions: _unavailableTimeSlots(), // move this to calendar settings later
               timeSlotViewSettings: TimeSlotViewSettings(

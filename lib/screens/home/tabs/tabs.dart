@@ -35,7 +35,7 @@ class Tabs {
         ),
         icon: Icon(Icons.person),
         label: 'Profile',
-        floatingRoute: '/',
+        floatingRoute: null,
         serverOnly: false,
       ),
     ];

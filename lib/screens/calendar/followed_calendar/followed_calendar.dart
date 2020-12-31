@@ -74,7 +74,6 @@ class FollowedCalendarPage extends StatelessWidget {
                       ? details.date
                       : details.appointments[0].from;
                   String timeSlotId = calendar.constructTimeSlotId(dt);
-                  print('====================');
                   if (timeSlots == null) {
                     // do nothing
                   } else if (timeSlots.timeSlots.containsKey(timeSlotId)) {

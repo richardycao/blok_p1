@@ -1,5 +1,6 @@
 import 'package:blok_p1/models/user.dart';
 import 'package:blok_p1/screens/common/loading.dart';
+import 'package:blok_p1/screens/home/home_menu.dart';
 import 'package:blok_p1/screens/home/tabs/tabs.dart';
 import 'package:blok_p1/services/database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -41,16 +42,19 @@ class _HomeState extends State<Home> {
         return tabs.item(_tabIndex) == null
             ? Loading
             : Scaffold(
-                floatingActionButton: FloatingActionButton(
-                  onPressed: () {
-                    Navigator.pushNamed(
-                        context, tabs.floatingRoutes()[_tabIndex]);
-                  },
-                  child: Icon(Icons.add),
-                ),
+                drawer: HomeMenu(),
                 appBar: AppBar(
                   title: tabs.item(_tabIndex).title,
-                  actions: <Widget>[],
+                  actions: <Widget>[
+                    if (_tabIndex != 2)
+                      FlatButton(
+                          onPressed: () {
+                            var routes = tabs.floatingRoutes();
+                            if (routes[_tabIndex] != null)
+                              Navigator.pushNamed(context, routes[_tabIndex]);
+                          },
+                          child: Icon(Icons.add))
+                  ],
                 ),
                 body: tabs.item(_tabIndex).page,
                 bottomNavigationBar: BottomNavigationBar(
