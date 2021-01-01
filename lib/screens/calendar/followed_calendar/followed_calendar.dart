@@ -1,6 +1,9 @@
 import 'package:blok_p1/models/calendar.dart';
+import 'package:blok_p1/models/request.dart';
 import 'package:blok_p1/models/time_slot.dart';
+import 'package:blok_p1/models/user.dart';
 import 'package:blok_p1/screens/calendar/followed_calendar/followed_calendar_arguments.dart';
+import 'package:blok_p1/screens/calendar/followed_calendar/followed_calendar_join_time_slot_request_tile.dart';
 import 'package:blok_p1/services/database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -14,11 +17,15 @@ class FollowedCalendarPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final FollowedCalendarArguments args =
         ModalRoute.of(context).settings.arguments;
+    final FirebaseUser firebaseUser = Provider.of<FirebaseUser>(context);
 
     DateTime now = DateTime.now();
 
     return MultiProvider(
         providers: [
+          StreamProvider<User>.value(
+            value: DatabaseService(userId: firebaseUser.uid).streamUser(),
+          ),
           StreamProvider<Calendar>.value(
             value:
                 DatabaseService(calendarId: args.calendarId).streamCalendar(),
@@ -29,7 +36,7 @@ class FollowedCalendarPage extends StatelessWidget {
           )
         ],
         builder: (context, child) {
-          final FirebaseUser firebaseUser = Provider.of<FirebaseUser>(context);
+          final User user = Provider.of<User>(context);
           final Calendar calendar = Provider.of<Calendar>(context);
           final TimeSlots timeSlots = Provider.of<TimeSlots>(context);
 
@@ -37,6 +44,43 @@ class FollowedCalendarPage extends StatelessWidget {
             appBar: AppBar(
               title: Text(calendar == null ? '' : calendar.name),
               actions: [
+                SizedBox(
+                  width: 50.0,
+                  child: FlatButton(
+                      onPressed: () async {
+                        // get the time slot requests here
+                        // i.e. gets incomingRequests for the calendar's owner
+                        List<Request> pendingTimeSlotRequests = user != null
+                            ? user.incomingRequests.entries
+                                .where((element) =>
+                                    element.value.split("-")[0] ==
+                                        calendar.calendarId &&
+                                    element.value.split("-").length > 1)
+                                .map((e) => Request(
+                                    requestId: e.key, requesterId: e.value))
+                                .toList()
+                            : [];
+                        showModalBottomSheet(
+                            context: context,
+                            builder: (context) {
+                              return ListView.builder(
+                                itemCount: pendingTimeSlotRequests.length,
+                                itemBuilder: (context, index) {
+                                  // return Text(pendingTimeSlotRequests[index]
+                                  //     .requesterName);
+                                  return FollowedCalendarJoinTimeSlotRequestsTile(
+                                    request: pendingTimeSlotRequests[index],
+                                    approverId: firebaseUser.uid,
+                                  );
+                                },
+                              );
+                            });
+                      },
+                      child: Icon(
+                        Icons.pending_actions,
+                        size: 25.0,
+                      )),
+                ),
                 FlatButton.icon(
                     onPressed: () async {
                       await DatabaseService(
@@ -93,13 +137,15 @@ class FollowedCalendarPage extends StatelessWidget {
                                               .timeSlots[timeSlotId].occupants
                                               .containsKey(firebaseUser.uid)
                                           ? Text('Leave')
-                                          : timeSlots.timeSlots[timeSlotId]
-                                                      .occupants.length <
-                                                  timeSlots
-                                                      .timeSlots[timeSlotId]
-                                                      .limit
-                                              ? Text('Join')
-                                              : Text("it's full"),
+                                          :
+                                          // timeSlots.timeSlots[timeSlotId]
+                                          //             .occupants.length <
+                                          //         timeSlots
+                                          //             .timeSlots[timeSlotId]
+                                          //             .limit
+                                          //     ?
+                                          Text('Join/request'),
+                                      //: Text("it's full"),
                                       onPressed: () async {
                                         if (timeSlots
                                             .timeSlots[timeSlotId].occupants
@@ -112,27 +158,31 @@ class FollowedCalendarPage extends StatelessWidget {
                                                       calendar.calendarId,
                                                   timeSlotId: timeSlotId)
                                               .leaveTimeSlot();
-                                        } else if (timeSlots
-                                                .timeSlots[timeSlotId]
-                                                .occupants
-                                                .length <
-                                            timeSlots
-                                                .timeSlots[timeSlotId].limit) {
+                                        } else
+                                        // if (timeSlots
+                                        //         .timeSlots[timeSlotId]
+                                        //         .occupants
+                                        //         .length <
+                                        //     timeSlots
+                                        //         .timeSlots[timeSlotId].limit)
+                                        {
                                           // if the user is not yet an occupant and the time slot is not full
-                                          print('not occupant, now joining');
+                                          print('not occupant, now requesting');
                                           await DatabaseService(
                                                   userId: firebaseUser.uid,
                                                   calendarId:
                                                       calendar.calendarId,
                                                   timeSlotId: timeSlotId)
-                                              .joinTimeSlot(timeSlots
-                                                  .timeSlots[timeSlotId]
-                                                  .eventName);
-                                        } else {
-                                          // if the user tries to join the time slot but it's full
-                                          print(
-                                              'not occupant, time slot is full');
+                                              .createRequestJoinTimeSlot(
+                                                  timeSlots
+                                                      .timeSlots[timeSlotId]
+                                                      .eventName);
                                         }
+                                        // else {
+                                        //   // if the user tries to join the time slot but it's full
+                                        //   print(
+                                        //       'not occupant, time slot is full');
+                                        // }
                                         Navigator.pop(context);
                                       }),
                                 ],

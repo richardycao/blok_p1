@@ -83,6 +83,7 @@ class DatabaseService {
   /////////////////////////////////////////////////////////////////////
 
   // CREATE user
+  // input: userId
   Future createUser(
       {String displayName = anon_name,
       String email,
@@ -100,6 +101,7 @@ class DatabaseService {
   }
 
   // UPDATE user data
+  // input: userId
   Future updateUserData(
       {String displayName, String email, bool serverEnabled}) async {
     await userCollection.document(userId).setData({
@@ -114,6 +116,7 @@ class DatabaseService {
   /////////////////////////////////////////////////////////////////////
 
   // CREATE calendar
+  // input: userId
   Future<String> createCalendar(String name,
       {String description = calendar_description,
       int backVisiblity = 0,
@@ -134,7 +137,7 @@ class DatabaseService {
         'createDate': now,
         'granularity': granularity,
         'requests': {},
-        'joinApprovals': 1,
+        'requiresJoinApproval': true,
       });
       String newCalendarId = docRef.documentID;
 
@@ -162,6 +165,7 @@ class DatabaseService {
           'from': ts,
           'to': ts.add(Duration(minutes: granularity)),
           'requests': {},
+          'requiresOwnerApproval': true,
           'background': null,
           'isAllDay': null,
         });
@@ -180,6 +184,7 @@ class DatabaseService {
   }
 
   // JOIN calendar
+  // input: userId, calendarId
   Future joinCalendar() async {
     try {
       DocumentSnapshot calendarSnapshot =
@@ -201,6 +206,7 @@ class DatabaseService {
   }
 
   // ADD user to calendar
+  // input: none
   Future addFollowerToCalendar(
       String addedUserId, String addedCalendarId) async {
     try {
@@ -222,7 +228,8 @@ class DatabaseService {
     }
   }
 
-  // LEAVE calendar or REMOVE from calendar
+  // LEAVE calendar or KICK from calendar
+  // input: userId, calendarId
   Future leaveCalendar() async {
     try {
       DocumentSnapshot userSnapshot =
@@ -270,6 +277,7 @@ class DatabaseService {
   }
 
   // UPDATE calendar data
+  // input: calendarId
   Future updateCalendarData(
       {String name, String description, int granularity}) async {
     await calendarCollection.document(calendarId).setData({
@@ -287,6 +295,7 @@ class DatabaseService {
   /////////////////////////////////////////////////////////////////////
 
   // JOIN time slot
+  // input: userId, calendarId, timeSlotId
   Future joinTimeSlot(String name) async {
     try {
       // Adds user to time slot's occupants
@@ -308,7 +317,31 @@ class DatabaseService {
     }
   }
 
+  // ADD occupant to time slot
+  // input: userId, calendarId, timeSlotId
+  Future addOccupantToTimeSlot(String addedUserId, String addedCalendarId,
+      String addedTimeSlotId, String name) async {
+    try {
+      // Adds user to time slot's occupants
+      await calendarCollection
+          .document(addedCalendarId)
+          .collection(TIMESLOTS)
+          .document(addedTimeSlotId)
+          .updateData({
+        "occupants.$addedUserId": name,
+      });
+
+      // Updates user's bookings
+      await userCollection.document(addedUserId).updateData({
+        "bookings.$addedTimeSlotId": addedCalendarId,
+      });
+    } catch (e) {
+      print(e.toString());
+    }
+  }
+
   // LEAVE time slot
+  // input: userId, calendarId, timeSlotId
   Future leaveTimeSlot() async {
     try {
       // Updates user's bookings
@@ -330,20 +363,22 @@ class DatabaseService {
   }
 
   // KICK from time slot
-  Future kickFromTimeSlot(String kickedUserId) async {
+  // input: none
+  Future kickFromTimeSlot(String kickedUserId, String kickedCalendarId,
+      String kickedTimeSlotId) async {
     try {
       // Updates user's bookings
       Map<String, Object> deleteTimeSlotId = {};
-      deleteTimeSlotId["bookings.$timeSlotId"] = FieldValue.delete();
+      deleteTimeSlotId["bookings.$kickedTimeSlotId"] = FieldValue.delete();
       await userCollection.document(kickedUserId).updateData(deleteTimeSlotId);
 
       // Removes user to time slot's occupants
       Map<String, Object> deleteUserId = {};
       deleteUserId["occupants.$kickedUserId"] = FieldValue.delete();
       await calendarCollection
-          .document(calendarId)
+          .document(kickedCalendarId)
           .collection(TIMESLOTS)
-          .document(timeSlotId)
+          .document(kickedTimeSlotId)
           .updateData(deleteUserId);
     } catch (e) {
       print(e.toString());
@@ -351,6 +386,7 @@ class DatabaseService {
   }
 
   // UPDATE time slot data
+  // input: calendarId, timeSlotId
   Future updateTimeSlotData({int status}) async {
     if (status == 0) {
       DocumentSnapshot snapshot = await calendarCollection
@@ -361,8 +397,8 @@ class DatabaseService {
       Map<String, String> occupants =
           Map<String, String>.from(snapshot.data['occupants']);
       // leave time slot for each occupant
-      occupants.forEach((key, value) async {
-        await kickFromTimeSlot(key);
+      occupants.forEach((kickedUserId, kickedName) async {
+        await kickFromTimeSlot(kickedUserId, calendarId, timeSlotId);
       });
     }
     await calendarCollection
@@ -379,12 +415,22 @@ class DatabaseService {
   /////////////////////////////////////////////////////////////////////
 
   // CREATE request to join calendar
-  Future<bool> createRequestJoinCalendar({String message = ""}) async {
+  // input: userId, calendarId
+  Future<bool> createRequestJoinCalendar(String name,
+      {String message = ""}) async {
     try {
       DocumentSnapshot calendarSnapshot =
           await calendarCollection.document(calendarId).get();
 
-      if (calendarSnapshot.data['joinApprovals'] as int == 0) {
+      // if the user is already a follower or has a pending request, do nothing.
+      if (Map<String, String>.from(calendarSnapshot.data['followers'])
+              .containsKey(userId) ||
+          Map<String, String>.from(calendarSnapshot.data['requests'])
+              .containsValue(userId)) {
+        return null;
+      }
+
+      if (calendarSnapshot.data['requiresJoinApproval'] as bool == false) {
         joinCalendar();
         return true;
       }
@@ -396,8 +442,11 @@ class DatabaseService {
         'type': "calendar",
         'itemId': calendarId,
         'requesterId': userId,
-        'approvers': calendarSnapshot.data['owners'],
-        'requiredApprovals': calendarSnapshot.data['joinApprovals'] as int,
+        'requesterName': name,
+        'ownerApprovers': calendarSnapshot.data['owners'],
+        'otherApprovers': {},
+        'hasOwnerApproval': false,
+        'hasOtherApproval': true,
         'responses': {},
         'message': message,
         'createDate': now,
@@ -429,6 +478,7 @@ class DatabaseService {
     }
   }
 
+  // RESPOND to request to join calendar
   // Input: userId, requestId
   Future respondRequestJoinCalendar(int decision) async {
     // get the request object
@@ -439,21 +489,26 @@ class DatabaseService {
     // add the approver user's decision
     request.responses[userId] = decision;
 
-    int totalApprovers = request.approvers.length;
-    int numberResponses = request.responses.length;
-    int numberApprovals =
-        request.responses.entries.where((element) => element.value == 1).length;
-    // if the request has for certain passed, set userId = requesterId and calendarId = itemId,
-    // then call joinCalendar() above, then delete the request
-    if (numberApprovals >= request.requiredApprovals) {
-      addFollowerToCalendar(request.requesterId, request.itemId);
-      deleteCalendarRequest(request);
+    Map<String, int> ownerResponses = Map<String, int>.fromEntries(request
+        .responses.entries
+        .where((element) => request.ownerApprovers.containsKey(element.key)));
+    // if the user is an owner, the request status will be adjusted based on their decision
+    if (request.ownerApprovers.containsKey(userId)) {
+      // if there is an approving owner response, then hasOwnerApproval is true
+      request.hasOwnerApproval =
+          ownerResponses.entries.where((element) => element.value == 1).length >
+              0;
     }
-    // else if the request has for certain failed, delete the request from requests, users, and calendars
-    else if (totalApprovers - numberResponses <
-        request.requiredApprovals - numberApprovals) {
+
+    // if the request has passed, add user to calendar, then delete the request
+    if (request.hasOwnerApproval) {
+      await addFollowerToCalendar(request.requesterId, request.itemId);
+      await deleteCalendarRequest(request);
+    }
+    // else if the request has certain failed, delete the request from requests, users, and calendars
+    else if (request.ownerApprovers.length == ownerResponses.length) {
       // if the number of people remaining is strictly less than the number of approvals needed
-      deleteCalendarRequest(request);
+      await deleteCalendarRequest(request);
     }
     // else, update the request in firestore
     else {
@@ -463,6 +518,8 @@ class DatabaseService {
     }
   }
 
+  // DELETE join calendar request
+  // input: none
   Future deleteCalendarRequest(Request request) async {
     // delete outgoing request for requester user
     Map<String, Object> deleteOutgoingRequestId = {};
@@ -472,8 +529,11 @@ class DatabaseService {
         .document(request.requesterId)
         .updateData(deleteOutgoingRequestId);
 
+    Map<String, String> approvers = {};
+    approvers.addAll(request.ownerApprovers);
+
     // delete incoming request for approver users
-    request.approvers.forEach((approverUserId, approverName) async {
+    approvers.forEach((approverUserId, approverName) async {
       Map<String, Object> deleteIncomingRequestId = {};
       deleteIncomingRequestId["incomingRequests.$requestId"] =
           FieldValue.delete();
@@ -488,6 +548,203 @@ class DatabaseService {
     await calendarCollection
         .document(request.itemId)
         .updateData(deleteCalendarRequestId);
+
+    // delete request object
+    await requestCollection.document(requestId).delete();
+  }
+
+  // CREATE request to join calendar time slot
+  // input: userId, calendarId, timeSlotId
+  Future<bool> createRequestJoinTimeSlot(String name,
+      {String message = ""}) async {
+    try {
+      DocumentSnapshot userSnapshot =
+          await userCollection.document(userId).get();
+      DocumentSnapshot calendarSnapshot =
+          await calendarCollection.document(calendarId).get();
+      DocumentSnapshot timeSlotSnapshot = await calendarCollection
+          .document(calendarId)
+          .collection(TIMESLOTS)
+          .document(timeSlotId)
+          .get();
+
+      // if the user is already an occupant or has a pending request, do nothing.
+      if (Map<String, String>.from(timeSlotSnapshot.data['occupants'])
+              .containsKey(userId) ||
+          Map<String, String>.from(timeSlotSnapshot.data['requests'])
+              .containsValue(userId)) {
+        return null;
+      }
+
+      if (timeSlotSnapshot.data['requiresOwnerApproval'] as bool == false) {
+        joinTimeSlot(name);
+        return true;
+      }
+
+      DateTime now = DateTime.now();
+      Map approvers = {};
+      approvers.addAll(calendarSnapshot.data['owners']);
+      // If the time slot is full, add the occupants as approvers
+      bool isFull = timeSlotSnapshot.data['occupants'].length >=
+          timeSlotSnapshot.data['limit'];
+      if (isFull) {
+        approvers.addAll(timeSlotSnapshot.data['occupants']);
+      } // else, only owner approval is required
+      approvers = Map<String, String>.from(approvers);
+
+      // creates a request and gets requestId
+      DocumentReference docRef = await requestCollection.add({
+        'type': "timeSlot",
+        'itemId': timeSlotId,
+        'requesterId': userId,
+        'requesterName': name,
+        'ownerApprovers': calendarSnapshot.data['owners'],
+        'otherApprovers': timeSlotSnapshot.data['occupants'],
+        'hasOwnerApproval': false,
+        'hasOtherApproval': !isFull,
+        'responses': {},
+        'message': message,
+        'createDate': now,
+      });
+      String newRequestId = docRef.documentID;
+
+      // update outgoing requests for requester
+      await userCollection.document(userId).updateData({
+        "outgoingRequests.$newRequestId": timeSlotId,
+      });
+
+      // update incoming requests for approvers
+      Map<String, String>.from(approvers)
+          .forEach((approverUserId, approverName) async {
+        await userCollection.document(approverUserId).updateData({
+          "incomingRequests.$newRequestId": timeSlotId,
+        });
+      });
+
+      // update requests for time slots
+      await calendarCollection
+          .document(calendarId)
+          .collection(TIMESLOTS)
+          .document(timeSlotId)
+          .updateData({
+        "requests.$newRequestId": userId,
+      });
+
+      return false;
+    } catch (e) {
+      print(e.toString());
+      return null;
+    }
+  }
+
+  // RESPOND to request to join time slot
+  // Input: userId, requestId, ?
+  Future respondRequestJoinTimeSlot(int decision) async {
+    // get the request object
+    DocumentSnapshot snapshot =
+        await requestCollection.document(requestId).get();
+    Request request = Request.fromSnapshot(snapshot);
+    String timeSlotCalendarId = request.itemId.split("-")[0];
+
+    // add the approver user's decision
+    request.responses[userId] = decision;
+    Map<String, int> ownerResponses = Map<String, int>.fromEntries(request
+        .responses.entries
+        .where((element) => request.ownerApprovers.containsKey(element.key)));
+    Map<String, int> otherResponses = Map<String, int>.fromEntries(request
+        .responses.entries
+        .where((element) => request.otherApprovers.containsKey(element.key)));
+
+    // if the user is an owner, update
+    bool isOwner = request.ownerApprovers.containsKey(userId);
+    bool isOther = request.otherApprovers.containsKey(userId);
+    if (isOwner) {
+      print('is owner');
+      request.hasOwnerApproval = decision == 1
+          ? true
+          : ownerResponses.entries
+                  .where((element) => element.value == 1)
+                  .length >
+              0;
+    }
+    // if the user is an other, update
+    if (isOther) {
+      print('is other');
+      request.hasOtherApproval = decision == 1
+          ? true
+          : otherResponses.entries
+                  .where((element) => element.value == 1)
+                  .length >
+              0;
+    }
+
+    print('1');
+    // if the request has passed, add user to calendar, then delete the request
+    if (request.hasOwnerApproval && request.hasOtherApproval) {
+      print('passed');
+      request.otherApprovers.forEach((kickedUserId, kickedName) async {
+        await kickFromTimeSlot(
+            kickedUserId, timeSlotCalendarId, request.itemId);
+      });
+      await addOccupantToTimeSlot(request.requesterId, timeSlotCalendarId,
+          request.itemId, request.requesterName);
+      await deleteTimeSlotRequest(request);
+    }
+    // else if the request has for certain failed,
+    // then delete the request from requests, users, and calendars
+    else if ((ownerResponses.length == request.ownerApprovers.length &&
+            !request.hasOwnerApproval) ||
+        (otherResponses.length == request.otherApprovers.length &&
+            !request.hasOwnerApproval)) {
+      print('failed');
+      await deleteTimeSlotRequest(request);
+    }
+    // else, update the request in firestore
+    else {
+      print('update');
+      await requestCollection.document(requestId).updateData({
+        if (isOwner) "hasOwnerApproval": request.hasOwnerApproval,
+        if (isOther) "hasOtherApproval": request.hasOtherApproval,
+        "responses.${request.requesterId}": decision,
+      });
+    }
+  }
+
+  // DELETE join time slot request
+  // input: none
+  Future deleteTimeSlotRequest(Request request) async {
+    String timeSlotCalendarId = request.itemId.split("-")[0];
+
+    // delete outgoing request for requester user
+    Map<String, Object> deleteOutgoingRequestId = {};
+    deleteOutgoingRequestId["outgoingRequests.$requestId"] =
+        FieldValue.delete();
+    await userCollection
+        .document(request.requesterId)
+        .updateData(deleteOutgoingRequestId);
+
+    Map<String, String> approvers = {};
+    approvers.addAll(request.ownerApprovers);
+    approvers.addAll(request.otherApprovers);
+
+    // delete incoming request for approver users
+    approvers.forEach((approverUserId, approverName) async {
+      Map<String, Object> deleteIncomingRequestId = {};
+      deleteIncomingRequestId["incomingRequests.$requestId"] =
+          FieldValue.delete();
+      await userCollection
+          .document(approverUserId)
+          .updateData(deleteIncomingRequestId);
+    });
+
+    // delete request from time slot
+    Map<String, Object> deleteTimeSlotRequestId = {};
+    deleteTimeSlotRequestId["requests.$requestId"] = FieldValue.delete();
+    await calendarCollection
+        .document(timeSlotCalendarId)
+        .collection(TIMESLOTS)
+        .document(request.itemId)
+        .updateData(deleteTimeSlotRequestId);
 
     // delete request object
     await requestCollection.document(requestId).delete();

@@ -12,6 +12,7 @@ class TimeSlot {
   DateTime from;
   DateTime to;
   Map<String, String> requests;
+  bool requiresOwnerApproval;
 
   // Ignore these
   Color background;
@@ -28,6 +29,7 @@ class TimeSlot {
     this.requests,
     this.background,
     this.isAllDay,
+    this.requiresOwnerApproval,
   });
 }
 
@@ -57,6 +59,8 @@ class TimeSlots extends CalendarDataSource {
           from: snap.data['from'].toDate() ?? null,
           to: snap.data['to'].toDate() ?? null,
           requests: Map<String, String>.from(snap.data['requests']) ?? {},
+          requiresOwnerApproval:
+              snap.data['requiresOwnerApproval'] as bool ?? null,
           background: (snap.data['status'] as int) == 0
               ? Colors.grey
               : snap.data['occupants'].length > 0

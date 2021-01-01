@@ -3,10 +3,10 @@ import 'package:blok_p1/models/user.dart';
 import 'package:blok_p1/services/database.dart';
 import 'package:flutter/material.dart';
 
-class OwnedCalendarJoinRequestsTile extends StatelessWidget {
+class FollowedCalendarJoinTimeSlotRequestsTile extends StatelessWidget {
   final Request request;
   final String approverId;
-  OwnedCalendarJoinRequestsTile({this.request, this.approverId});
+  FollowedCalendarJoinTimeSlotRequestsTile({this.request, this.approverId});
 
   @override
   Widget build(BuildContext context) {
@@ -18,19 +18,19 @@ class OwnedCalendarJoinRequestsTile extends StatelessWidget {
             vertical: 10.0, horizontal: 30.0), // padding inside the card
         title: Row(
           children: [
-            Text('join request'),
+            Text('time slot req'),
             FlatButton(
                 onPressed: () {
                   DatabaseService(
                           userId: approverId, requestId: request.requestId)
-                      .respondRequestJoinCalendar(1);
+                      .respondRequestJoinTimeSlot(1);
                 },
                 child: Icon(Icons.check)),
             FlatButton(
                 onPressed: () {
                   DatabaseService(
                           userId: approverId, requestId: request.requestId)
-                      .respondRequestJoinCalendar(0);
+                      .respondRequestJoinTimeSlot(0);
                 },
                 child: Icon(Icons.delete_forever)),
           ],

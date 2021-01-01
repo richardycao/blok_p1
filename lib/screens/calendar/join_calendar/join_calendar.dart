@@ -30,7 +30,7 @@ class JoinCalendar extends StatelessWidget {
                   onPressed: () async {
                     dynamic result = await DatabaseService(
                             userId: user.uid, calendarId: testJoinCalendarId)
-                        .createRequestJoinCalendar();
+                        .createRequestJoinCalendar(testRequesterName);
                     if (result) {
                       Navigator.popAndPushNamed(
                           context, FollowedCalendarPage.route,

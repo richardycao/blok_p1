@@ -5,6 +5,7 @@ import 'package:blok_p1/models/user.dart';
 import 'package:blok_p1/screens/calendar/owned_calendar/owned_calendar_arguments.dart';
 import 'package:blok_p1/screens/calendar/owned_calendar/owned_calendar_follower_tile.dart';
 import 'package:blok_p1/screens/calendar/owned_calendar/owned_calendar_join_requests_tile.dart';
+import 'package:blok_p1/screens/calendar/owned_calendar/owned_calendar_join_time_slot_request_tile.dart';
 import 'package:blok_p1/services/database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -24,11 +25,15 @@ class _OwnedCalendarPageState extends State<OwnedCalendarPage> {
   Widget build(BuildContext context) {
     final OwnedCalendarArguments args =
         ModalRoute.of(context).settings.arguments;
+    final FirebaseUser firebaseUser = Provider.of<FirebaseUser>(context);
 
     DateTime now = DateTime.now();
 
     return MultiProvider(
       providers: [
+        StreamProvider<User>.value(
+          value: DatabaseService(userId: firebaseUser.uid).streamUser(),
+        ),
         StreamProvider<Calendar>.value(
           value: DatabaseService(calendarId: args.calendarId).streamCalendar(),
         ),
@@ -38,7 +43,7 @@ class _OwnedCalendarPageState extends State<OwnedCalendarPage> {
         )
       ],
       builder: (context, child) {
-        final FirebaseUser firebaseUser = Provider.of<FirebaseUser>(context);
+        final User user = Provider.of<User>(context);
         final Calendar calendar = Provider.of<Calendar>(context);
         final TimeSlots timeSlots = Provider.of<TimeSlots>(context);
 
@@ -50,6 +55,43 @@ class _OwnedCalendarPageState extends State<OwnedCalendarPage> {
                     ? 'Editing: ' + calendar.name
                     : calendar.name),
             actions: [
+              SizedBox(
+                width: 50.0,
+                child: FlatButton(
+                    onPressed: () async {
+                      // get the time slot requests here
+                      // i.e. gets incomingRequests for the calendar's owner
+                      List<Request> pendingTimeSlotRequests = user != null
+                          ? user.incomingRequests.entries
+                              .where((element) =>
+                                  element.value.split("-")[0] ==
+                                      calendar.calendarId &&
+                                  element.value.split("-").length > 1)
+                              .map((e) => Request(
+                                  requestId: e.key, requesterId: e.value))
+                              .toList()
+                          : [];
+                      showModalBottomSheet(
+                          context: context,
+                          builder: (context) {
+                            return ListView.builder(
+                              itemCount: pendingTimeSlotRequests.length,
+                              itemBuilder: (context, index) {
+                                // return Text(pendingTimeSlotRequests[index]
+                                //     .requesterName);
+                                return OwnedCalendarJoinTimeSlotRequestsTile(
+                                  request: pendingTimeSlotRequests[index],
+                                  approverId: firebaseUser.uid,
+                                );
+                              },
+                            );
+                          });
+                    },
+                    child: Icon(
+                      Icons.pending_actions,
+                      size: 25.0,
+                    )),
+              ),
               SizedBox(
                 width: 50.0,
                 child: FlatButton(
@@ -76,7 +118,7 @@ class _OwnedCalendarPageState extends State<OwnedCalendarPage> {
                           });
                     },
                     child: Icon(
-                      Icons.pending_actions,
+                      Icons.person_add_alt_1,
                       size: 25.0,
                     )),
               ),
@@ -110,7 +152,7 @@ class _OwnedCalendarPageState extends State<OwnedCalendarPage> {
                     )),
               ),
               SizedBox(
-                width: 70.0,
+                width: 50.0,
                 child: FlatButton(
                     onPressed: () {
                       setState(() {

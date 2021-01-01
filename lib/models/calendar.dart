@@ -13,7 +13,7 @@ class Calendar {
   DateTime createDate;
   int granularity; // in minutes
   Map<String, String> requests;
-  int joinApprovals;
+  bool requiresJoinApproval;
 
   Calendar({
     this.calendarId,
@@ -26,7 +26,7 @@ class Calendar {
     this.createDate,
     this.granularity,
     this.requests,
-    this.joinApprovals,
+    this.requiresJoinApproval,
   });
 
   factory Calendar.fromSnapshot(DocumentSnapshot snapshot) {
@@ -45,7 +45,7 @@ class Calendar {
       createDate: data['createDate'].toDate() as DateTime ?? null,
       granularity: data['granularity'] as int ?? null,
       requests: Map<String, String>.from(data['requests']) ?? {},
-      joinApprovals: data['joinApprovals'] as int ?? null,
+      requiresJoinApproval: data['requiresJoinApproval'] as bool ?? null,
     );
   }
 

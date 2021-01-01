@@ -5,8 +5,11 @@ class Request {
   String type;
   String itemId;
   String requesterId;
-  Map<String, String> approvers;
-  int requiredApprovals;
+  String requesterName;
+  Map<String, String> ownerApprovers;
+  Map<String, String> otherApprovers;
+  bool hasOwnerApproval;
+  bool hasOtherApproval;
   Map<String, int> responses;
   String message;
   DateTime createDate;
@@ -16,8 +19,11 @@ class Request {
       this.type,
       this.itemId,
       this.requesterId,
-      this.approvers,
-      this.requiredApprovals,
+      this.requesterName,
+      this.ownerApprovers,
+      this.otherApprovers,
+      this.hasOwnerApproval,
+      this.hasOtherApproval,
       this.responses,
       this.message,
       this.createDate});
@@ -30,8 +36,11 @@ class Request {
       type: data['type'] as String ?? null,
       itemId: data['itemId'] as String ?? null,
       requesterId: data['requesterId'] as String ?? null,
-      approvers: Map<String, String>.from(data['approvers']) ?? {},
-      requiredApprovals: data['requiredApprovals'] as int ?? null,
+      requesterName: data['requesterName'] as String ?? null,
+      ownerApprovers: Map<String, String>.from(data['ownerApprovers']) ?? {},
+      otherApprovers: Map<String, String>.from(data['otherApprovers']) ?? {},
+      hasOwnerApproval: data['hasOwnerApproval'] as bool ?? null,
+      hasOtherApproval: data['hasOtherApproval'] as bool ?? null,
       responses: Map<String, int>.from(data['responses']) ?? {},
       message: data['message'] as String ?? null,
       createDate: data['createDate'].toDate() as DateTime ?? null,
