@@ -6,11 +6,11 @@ class Request {
   String itemId;
   String requesterId;
   String requesterName;
-  Map<String, String> ownerApprovers;
-  Map<String, String> otherApprovers;
+  Map<String, String> ownerApprovers; // userId : name
+  Map<String, String> otherApprovers; // userId : name
   bool hasOwnerApproval;
   bool hasOtherApproval;
-  Map<String, int> responses;
+  Map<String, int> responses; // userId : decision
   String message;
   DateTime createDate;
 

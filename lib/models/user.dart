@@ -4,12 +4,12 @@ class User {
   final String userId;
   String displayName;
   String email;
-  Map<String, String> ownedCalendars;
-  Map<String, String> followedCalendars;
+  Map<String, String> ownedCalendars; // calendarId : calendarName
+  Map<String, String> followedCalendars; // calendarId : calendarName
   bool serverEnabled;
-  Map<String, String> bookings;
-  Map<String, String> incomingRequests;
-  Map<String, String> outgoingRequests;
+  Map<String, String> bookings; // timeSlotId : calendarId
+  Map<String, String> incomingRequests; // requestId : itemId
+  Map<String, String> outgoingRequests; // requestId : itemId
 
   User({
     this.userId,

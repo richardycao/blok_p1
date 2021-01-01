@@ -6,13 +6,13 @@ class Calendar {
   final String calendarId;
   String name;
   String description;
-  Map<String, String> owners;
-  Map<String, String> followers;
+  Map<String, String> owners; // userId : name
+  Map<String, String> followers; // userId : name
   int backVisibility;
   int forwardVisibility;
   DateTime createDate;
   int granularity; // in minutes
-  Map<String, String> requests;
+  Map<String, String> requests; // requestId : userId
   bool requiresJoinApproval;
 
   Calendar({

@@ -7,11 +7,11 @@ class TimeSlot {
   final String timeSlotId;
   String eventName;
   int status; // make this into a String later for better interpretability
-  Map<String, String> occupants;
+  Map<String, String> occupants; // userId : name
   int limit;
   DateTime from;
   DateTime to;
-  Map<String, String> requests;
+  Map<String, String> requests; // requestId : userId
   bool requiresOwnerApproval;
 
   // Ignore these
