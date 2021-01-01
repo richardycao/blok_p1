@@ -26,15 +26,17 @@ class JoinCalendar extends StatelessWidget {
                   onPressed: () async {},
                 ),
                 ElevatedButton(
-                  child: Text('Join hard-coded calendar ID'),
+                  child: Text('Join/request hard-coded calendar ID'),
                   onPressed: () async {
-                    await DatabaseService(
+                    dynamic result = await DatabaseService(
                             userId: user.uid, calendarId: testJoinCalendarId)
-                        .joinCalendar(); // hardcoded for testing for now
-                    Navigator.popAndPushNamed(
-                        context, FollowedCalendarPage.route,
-                        arguments: FollowedCalendarArguments(
-                            calendarId: testJoinCalendarId));
+                        .createRequestJoinCalendar();
+                    if (result) {
+                      Navigator.popAndPushNamed(
+                          context, FollowedCalendarPage.route,
+                          arguments: FollowedCalendarArguments(
+                              calendarId: testJoinCalendarId));
+                    }
                   },
                 ),
               ],

@@ -1,9 +1,12 @@
 import 'package:blok_p1/models/calendar.dart';
+import 'package:blok_p1/models/request.dart';
 import 'package:blok_p1/models/time_slot.dart';
 import 'package:blok_p1/models/user.dart';
 import 'package:blok_p1/screens/calendar/owned_calendar/owned_calendar_arguments.dart';
 import 'package:blok_p1/screens/calendar/owned_calendar/owned_calendar_follower_tile.dart';
+import 'package:blok_p1/screens/calendar/owned_calendar/owned_calendar_join_requests_tile.dart';
 import 'package:blok_p1/services/database.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
@@ -35,6 +38,7 @@ class _OwnedCalendarPageState extends State<OwnedCalendarPage> {
         )
       ],
       builder: (context, child) {
+        final FirebaseUser firebaseUser = Provider.of<FirebaseUser>(context);
         final Calendar calendar = Provider.of<Calendar>(context);
         final TimeSlots timeSlots = Provider.of<TimeSlots>(context);
 
@@ -46,6 +50,36 @@ class _OwnedCalendarPageState extends State<OwnedCalendarPage> {
                     ? 'Editing: ' + calendar.name
                     : calendar.name),
             actions: [
+              SizedBox(
+                width: 50.0,
+                child: FlatButton(
+                    onPressed: () async {
+                      // get the followers here
+                      List<Request> pendingJoinRequests = calendar != null
+                          ? calendar.requests.entries
+                              .map((e) => Request(
+                                  requestId: e.key, requesterId: e.value))
+                              .toList()
+                          : [];
+                      showModalBottomSheet(
+                          context: context,
+                          builder: (context) {
+                            return ListView.builder(
+                              itemCount: pendingJoinRequests.length,
+                              itemBuilder: (context, index) {
+                                return OwnedCalendarJoinRequestsTile(
+                                  request: pendingJoinRequests[index],
+                                  approverId: firebaseUser.uid,
+                                );
+                              },
+                            );
+                          });
+                    },
+                    child: Icon(
+                      Icons.pending_actions,
+                      size: 25.0,
+                    )),
+              ),
               SizedBox(
                 width: 50.0,
                 child: FlatButton(

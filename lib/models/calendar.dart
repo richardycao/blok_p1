@@ -12,17 +12,22 @@ class Calendar {
   int forwardVisibility;
   DateTime createDate;
   int granularity; // in minutes
+  Map<String, String> requests;
+  int joinApprovals;
 
-  Calendar(
-      {this.calendarId,
-      this.name,
-      this.description,
-      this.owners,
-      this.followers,
-      this.backVisibility,
-      this.forwardVisibility,
-      this.createDate,
-      this.granularity});
+  Calendar({
+    this.calendarId,
+    this.name,
+    this.description,
+    this.owners,
+    this.followers,
+    this.backVisibility,
+    this.forwardVisibility,
+    this.createDate,
+    this.granularity,
+    this.requests,
+    this.joinApprovals,
+  });
 
   factory Calendar.fromSnapshot(DocumentSnapshot snapshot) {
     // check if updating a time slot will trigger a calendar update
@@ -39,6 +44,8 @@ class Calendar {
       forwardVisibility: data['forwardVisibility'] as int ?? null,
       createDate: data['createDate'].toDate() as DateTime ?? null,
       granularity: data['granularity'] as int ?? null,
+      requests: Map<String, String>.from(data['requests']) ?? {},
+      joinApprovals: data['joinApprovals'] as int ?? null,
     );
   }
 

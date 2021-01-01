@@ -6,16 +6,14 @@ import 'package:syncfusion_flutter_calendar/calendar.dart';
 class TimeSlot {
   final String timeSlotId;
   String eventName;
-  // status: unavailable, available
-  int status;
+  int status; // make this into a String later for better interpretability
   Map<String, String> occupants;
   int limit;
   DateTime from;
-
-  // Ignore - Required by CalendarDataSource
   DateTime to;
-  // (maybe not necessary since time slots are identified by start time in the sfcalendar.
-  // the end time is implied by the appointment duration.)
+  Map<String, String> requests;
+
+  // Ignore these
   Color background;
   bool isAllDay;
 
@@ -27,6 +25,7 @@ class TimeSlot {
     this.limit,
     this.from,
     this.to,
+    this.requests,
     this.background,
     this.isAllDay,
   });
@@ -57,6 +56,7 @@ class TimeSlots extends CalendarDataSource {
           limit: snap.data['limit'] as int ?? null,
           from: snap.data['from'].toDate() ?? null,
           to: snap.data['to'].toDate() ?? null,
+          requests: Map<String, String>.from(snap.data['requests']) ?? {},
           background: (snap.data['status'] as int) == 0
               ? Colors.grey
               : snap.data['occupants'].length > 0
