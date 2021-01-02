@@ -1,6 +1,7 @@
 import 'package:blok_p1/constants/testing_constants.dart';
 import 'package:blok_p1/screens/calendar/followed_calendar/followed_calendar.dart';
 import 'package:blok_p1/screens/calendar/followed_calendar/followed_calendar_arguments.dart';
+import 'package:blok_p1/screens/common/loading.dart';
 import 'package:blok_p1/services/database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -11,7 +12,10 @@ class JoinCalendar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final FirebaseUser user = Provider.of<FirebaseUser>(context);
+    final FirebaseUser firebaseUser = Provider.of<FirebaseUser>(context);
+    if (firebaseUser == null) {
+      return Loading();
+    }
 
     return Scaffold(
         appBar: AppBar(
@@ -28,9 +32,9 @@ class JoinCalendar extends StatelessWidget {
                 ElevatedButton(
                   child: Text('Join/request hard-coded calendar ID'),
                   onPressed: () async {
-                    dynamic result = await DatabaseService(
-                            userId: user.uid, calendarId: testJoinCalendarId)
-                        .createRequestJoinCalendar(testRequesterName);
+                    dynamic result = await DatabaseService()
+                        .createJoinCalendarRequest(
+                            firebaseUser.uid, testJoinCalendarId);
                     if (result) {
                       Navigator.popAndPushNamed(
                           context, FollowedCalendarPage.route,

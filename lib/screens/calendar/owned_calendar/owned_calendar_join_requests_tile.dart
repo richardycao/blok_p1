@@ -1,12 +1,11 @@
 import 'package:blok_p1/models/request.dart';
-import 'package:blok_p1/models/user.dart';
 import 'package:blok_p1/services/database.dart';
 import 'package:flutter/material.dart';
 
 class OwnedCalendarJoinRequestsTile extends StatelessWidget {
   final Request request;
-  final String approverId;
-  OwnedCalendarJoinRequestsTile({this.request, this.approverId});
+  final String approverUserId;
+  OwnedCalendarJoinRequestsTile({this.request, this.approverUserId});
 
   @override
   Widget build(BuildContext context) {
@@ -21,16 +20,14 @@ class OwnedCalendarJoinRequestsTile extends StatelessWidget {
             Text('join request'),
             FlatButton(
                 onPressed: () {
-                  DatabaseService(
-                          userId: approverId, requestId: request.requestId)
-                      .respondRequestJoinCalendar(1);
+                  DatabaseService()
+                      .respondJoinCalendarRequest(approverUserId, request, 1);
                 },
                 child: Icon(Icons.check)),
             FlatButton(
                 onPressed: () {
-                  DatabaseService(
-                          userId: approverId, requestId: request.requestId)
-                      .respondRequestJoinCalendar(0);
+                  DatabaseService()
+                      .respondJoinCalendarRequest(approverUserId, request, 0);
                 },
                 child: Icon(Icons.delete_forever)),
           ],

@@ -24,15 +24,14 @@ class FollowedCalendarPage extends StatelessWidget {
     return MultiProvider(
         providers: [
           StreamProvider<User>.value(
-            value: DatabaseService(userId: firebaseUser.uid).streamUser(),
+            value: DatabaseService().streamUser(firebaseUser.uid),
           ),
           StreamProvider<Calendar>.value(
-            value:
-                DatabaseService(calendarId: args.calendarId).streamCalendar(),
+            value: DatabaseService().streamCalendar(args.calendarId),
           ),
           StreamProvider<TimeSlots>.value(
-            value: DatabaseService(calendarId: args.calendarId)
-                .streamTimeSlots(CalendarType.CLIENT),
+            value: DatabaseService()
+                .streamTimeSlots(args.calendarId, CalendarType.CLIENT),
           )
         ],
         builder: (context, child) {
@@ -66,11 +65,9 @@ class FollowedCalendarPage extends StatelessWidget {
                               return ListView.builder(
                                 itemCount: pendingTimeSlotRequests.length,
                                 itemBuilder: (context, index) {
-                                  // return Text(pendingTimeSlotRequests[index]
-                                  //     .requesterName);
                                   return FollowedCalendarJoinTimeSlotRequestsTile(
                                     request: pendingTimeSlotRequests[index],
-                                    approverId: firebaseUser.uid,
+                                    approverUserId: firebaseUser.uid,
                                   );
                                 },
                               );
@@ -83,10 +80,8 @@ class FollowedCalendarPage extends StatelessWidget {
                 ),
                 FlatButton.icon(
                     onPressed: () async {
-                      await DatabaseService(
-                              userId: firebaseUser.uid,
-                              calendarId: calendar.calendarId)
-                          .leaveCalendar();
+                      await DatabaseService().removeFollowerFromCalendar(
+                          user, calendar.calendarId);
                       Navigator.pop(context);
                     },
                     icon: Icon(Icons.exit_to_app),
@@ -95,19 +90,6 @@ class FollowedCalendarPage extends StatelessWidget {
             ),
             body: Container(
               child: SfCalendar(
-                // minDate and maxDate prevent scrolling to previous dates (limits visibility)
-
-                // for paying server, min will be the day they started
-                // for nonpaying server, min will be the day they started
-                // for client, min will be the day they joined.
-
-                // for paying server, max will be 1 year in the future
-                // for nonpaying server, max will be 1 month in the future
-                // for client, max will be same as the calendar's server
-
-                // specialRegions can make time slots uninteractable
-                // for all, time slots from minDate to present are uninteractable
-                // the server can choose which future time slots are interactable
                 minDate: DateTime(now.year, now.month, now.day).add(Duration(
                     days: calendar != null ? calendar.backVisibility : 0)),
                 maxDate: DateTime(now.year, now.month, now.day).add(Duration(
@@ -137,52 +119,28 @@ class FollowedCalendarPage extends StatelessWidget {
                                               .timeSlots[timeSlotId].occupants
                                               .containsKey(firebaseUser.uid)
                                           ? Text('Leave')
-                                          :
-                                          // timeSlots.timeSlots[timeSlotId]
-                                          //             .occupants.length <
-                                          //         timeSlots
-                                          //             .timeSlots[timeSlotId]
-                                          //             .limit
-                                          //     ?
-                                          Text('Join/request'),
-                                      //: Text("it's full"),
+                                          : Text('Join/request'),
                                       onPressed: () async {
                                         if (timeSlots
                                             .timeSlots[timeSlotId].occupants
                                             .containsKey(firebaseUser.uid)) {
                                           // if the user is already an occupant
                                           print('is occupant, now leaving');
-                                          await DatabaseService(
-                                                  userId: firebaseUser.uid,
-                                                  calendarId:
-                                                      calendar.calendarId,
-                                                  timeSlotId: timeSlotId)
-                                              .leaveTimeSlot();
-                                        } else
-                                        // if (timeSlots
-                                        //         .timeSlots[timeSlotId]
-                                        //         .occupants
-                                        //         .length <
-                                        //     timeSlots
-                                        //         .timeSlots[timeSlotId].limit)
-                                        {
+                                          await DatabaseService()
+                                              .removeOccupantFromTimeSlot(
+                                                  user.userId,
+                                                  calendar.calendarId,
+                                                  timeSlotId);
+                                        } else {
                                           // if the user is not yet an occupant and the time slot is not full
                                           print('not occupant, now requesting');
-                                          await DatabaseService(
-                                                  userId: firebaseUser.uid,
-                                                  calendarId:
-                                                      calendar.calendarId,
-                                                  timeSlotId: timeSlotId)
-                                              .createRequestJoinTimeSlot(
+                                          await DatabaseService()
+                                              .createJoinTimeSlotRequest(
+                                                  user,
+                                                  calendar,
                                                   timeSlots
-                                                      .timeSlots[timeSlotId]
-                                                      .eventName);
+                                                      .timeSlots[timeSlotId]);
                                         }
-                                        // else {
-                                        //   // if the user tries to join the time slot but it's full
-                                        //   print(
-                                        //       'not occupant, time slot is full');
-                                        // }
                                         Navigator.pop(context);
                                       }),
                                 ],

@@ -26,7 +26,7 @@ class AuthService {
       updateDisplayName("Guest", user);
 
       // create a new document for the user with the userId
-      await DatabaseService(userId: user.uid).createUser(displayName: "Guest");
+      await DatabaseService().createUser(user.uid, displayName: "Guest");
       return _userFromFirebaseUser(user);
     } catch (e) {
       print(e.toString());
@@ -53,7 +53,7 @@ class AuthService {
       FirebaseUser resultUser = result.user;
 
       // update user info in firestore
-      await DatabaseService(userId: user.uid).updateUserData(email: email);
+      await DatabaseService().updateUser(user.uid, email: email);
       return _userFromFirebaseUser(resultUser);
     } catch (e) {
       print(e);
@@ -71,8 +71,8 @@ class AuthService {
       updateDisplayName("Guest", user);
 
       // creates user in firestore
-      await DatabaseService(userId: user.uid)
-          .createUser(email: email, serverEnabled: true);
+      await DatabaseService()
+          .createUser(user.uid, email: email, serverEnabled: true);
       return _userFromFirebaseUser(user);
     } catch (e) {
       print(e.toString());

@@ -32,7 +32,7 @@ class _HomeState extends State<Home> {
     final FirebaseUser firebaseUser = Provider.of<FirebaseUser>(context);
 
     return StreamProvider<User>.value(
-      value: DatabaseService(userId: firebaseUser.uid).streamUser(),
+      value: DatabaseService().streamUser(firebaseUser.uid),
       builder: (context, child) {
         final User user = Provider.of<User>(context);
         Tabs tabs = Tabs(

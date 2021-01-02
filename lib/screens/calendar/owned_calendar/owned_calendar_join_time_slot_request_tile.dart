@@ -1,12 +1,11 @@
 import 'package:blok_p1/models/request.dart';
-import 'package:blok_p1/models/user.dart';
 import 'package:blok_p1/services/database.dart';
 import 'package:flutter/material.dart';
 
 class OwnedCalendarJoinTimeSlotRequestsTile extends StatelessWidget {
   final Request request;
-  final String approverId;
-  OwnedCalendarJoinTimeSlotRequestsTile({this.request, this.approverId});
+  final String approverUserId;
+  OwnedCalendarJoinTimeSlotRequestsTile({this.request, this.approverUserId});
 
   @override
   Widget build(BuildContext context) {
@@ -21,16 +20,14 @@ class OwnedCalendarJoinTimeSlotRequestsTile extends StatelessWidget {
             Text('time slot req'),
             FlatButton(
                 onPressed: () {
-                  DatabaseService(
-                          userId: approverId, requestId: request.requestId)
-                      .respondRequestJoinTimeSlot(1);
+                  DatabaseService()
+                      .respondJoinTimeSlotRequest(approverUserId, request, 1);
                 },
                 child: Icon(Icons.check)),
             FlatButton(
                 onPressed: () {
-                  DatabaseService(
-                          userId: approverId, requestId: request.requestId)
-                      .respondRequestJoinTimeSlot(0);
+                  DatabaseService()
+                      .respondJoinTimeSlotRequest(approverUserId, request, 0);
                 },
                 child: Icon(Icons.delete_forever)),
           ],

@@ -13,8 +13,8 @@ class CreateCalendar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final FirebaseUser user = Provider.of<FirebaseUser>(context);
-    if (user == null) {
+    final FirebaseUser firebaseUser = Provider.of<FirebaseUser>(context);
+    if (firebaseUser == null) {
       return Loading();
     }
 
@@ -29,9 +29,9 @@ class CreateCalendar extends StatelessWidget {
                 ElevatedButton(
                   child: Text('Generate a dummy calendar'),
                   onPressed: () async {
-                    dynamic result = await DatabaseService(userId: user.uid)
-                        .createCalendar("name " +
-                            Random.secure().nextInt(10000).toString());
+                    dynamic result = await DatabaseService().createCalendar(
+                        firebaseUser.uid,
+                        "name " + Random.secure().nextInt(10000).toString());
                     if (result != null) {
                       Navigator.popAndPushNamed(
                           context, OwnedCalendarPage.route,

@@ -20,8 +20,8 @@ class OwnedCalendarFollowerTile extends StatelessWidget {
             Text(user.displayName),
             FlatButton(
                 onPressed: () {
-                  DatabaseService(userId: user.userId, calendarId: calendarId)
-                      .leaveCalendar();
+                  DatabaseService()
+                      .removeFollowerFromCalendar(user, calendarId);
                 },
                 child: Icon(Icons.delete)),
           ],

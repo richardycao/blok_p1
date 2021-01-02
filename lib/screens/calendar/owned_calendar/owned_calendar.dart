@@ -32,14 +32,14 @@ class _OwnedCalendarPageState extends State<OwnedCalendarPage> {
     return MultiProvider(
       providers: [
         StreamProvider<User>.value(
-          value: DatabaseService(userId: firebaseUser.uid).streamUser(),
+          value: DatabaseService().streamUser(firebaseUser.uid),
         ),
         StreamProvider<Calendar>.value(
-          value: DatabaseService(calendarId: args.calendarId).streamCalendar(),
+          value: DatabaseService().streamCalendar(args.calendarId),
         ),
         StreamProvider<TimeSlots>.value(
-          value: DatabaseService(calendarId: args.calendarId)
-              .streamTimeSlots(CalendarType.OWNER),
+          value: DatabaseService()
+              .streamTimeSlots(args.calendarId, CalendarType.OWNER),
         )
       ],
       builder: (context, child) {
@@ -81,7 +81,7 @@ class _OwnedCalendarPageState extends State<OwnedCalendarPage> {
                                 //     .requesterName);
                                 return OwnedCalendarJoinTimeSlotRequestsTile(
                                   request: pendingTimeSlotRequests[index],
-                                  approverId: firebaseUser.uid,
+                                  approverUserId: firebaseUser.uid,
                                 );
                               },
                             );
@@ -111,7 +111,7 @@ class _OwnedCalendarPageState extends State<OwnedCalendarPage> {
                               itemBuilder: (context, index) {
                                 return OwnedCalendarJoinRequestsTile(
                                   request: pendingJoinRequests[index],
-                                  approverId: firebaseUser.uid,
+                                  approverUserId: firebaseUser.uid,
                                 );
                               },
                             );
@@ -201,10 +201,10 @@ class _OwnedCalendarPageState extends State<OwnedCalendarPage> {
                       } else if (timeSlots.timeSlots.containsKey(timeSlotId)) {
                         int status =
                             timeSlots.timeSlots[timeSlotId].status == 0 ? 1 : 0;
-                        await DatabaseService(
-                                calendarId: calendar.calendarId,
-                                timeSlotId: timeSlotId)
-                            .updateTimeSlotData(status: status);
+                        await DatabaseService().updateTimeSlot(
+                            calendar.calendarId,
+                            timeSlots.timeSlots[timeSlotId],
+                            status: status);
                       } else {
                         print('out of range');
                       }

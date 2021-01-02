@@ -5,20 +5,33 @@ import 'package:blok_p1/models/time_slot.dart';
 import 'package:blok_p1/models/user.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class DatabaseService2 {
+class DatabaseService_old {
   static const String USERS = 'users';
   static const String CALENDARS = 'calendars';
   static const String TIMESLOTS = 'timeSlots';
   static const String REQUESTS = 'requests';
 
-  //////////////////////////////////////////////////////////////////////////////////////////////////
-  /// STREAMS
-  //////////////////////////////////////////////////////////////////////////////////////////////////
+  String userId;
+  String calendarId;
+  String timeSlotId;
+  String requestId;
+  DatabaseService_old(
+      {this.userId, this.calendarId, this.timeSlotId, this.requestId});
 
-  Stream<User> streamUser(String userId) {
+  final CollectionReference userCollection =
+      Firestore.instance.collection(USERS);
+  final CollectionReference calendarCollection =
+      Firestore.instance.collection(CALENDARS);
+  final CollectionReference requestCollection =
+      Firestore.instance.collection(REQUESTS);
+
+  /////////////////////////////////////////////////////////////////////
+  /// STREAMS
+  /////////////////////////////////////////////////////////////////////
+
+  Stream<User> streamUser() {
     try {
-      return Firestore.instance
-          .collection(USERS)
+      return userCollection
           .document(userId)
           .snapshots()
           .map((snapshot) => User.fromSnapshot(snapshot));
@@ -28,10 +41,9 @@ class DatabaseService2 {
     }
   }
 
-  Stream<Calendar> streamCalendar(String calendarId) {
+  Stream<Calendar> streamCalendar() {
     try {
-      return Firestore.instance
-          .collection(CALENDARS)
+      return calendarCollection
           .document(calendarId)
           .snapshots()
           .map((snapshot) => Calendar.fromSnapshot(snapshot));
@@ -41,10 +53,9 @@ class DatabaseService2 {
     }
   }
 
-  Stream<TimeSlots> streamTimeSlots(String calendarId, CalendarType type) {
+  Stream<TimeSlots> streamTimeSlots(CalendarType type) {
     try {
-      return Firestore.instance
-          .collection(CALENDARS)
+      return calendarCollection
           .document(calendarId)
           .collection(TIMESLOTS)
           .snapshots()
@@ -55,10 +66,9 @@ class DatabaseService2 {
     }
   }
 
-  Stream<Request> streamRequest(String requestId) {
+  Stream<Request> streamRequest() {
     try {
-      return Firestore.instance
-          .collection(REQUESTS)
+      return requestCollection
           .document(requestId)
           .snapshots()
           .map((snapshot) => Request.fromSnapshot(snapshot));
@@ -68,16 +78,17 @@ class DatabaseService2 {
     }
   }
 
-  //////////////////////////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////
   /// USER
-  //////////////////////////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////
 
   // CREATE user
-  Future createUser(String userId,
+  // input: userId
+  Future createUser(
       {String displayName = anon_name,
-      String email = "",
+      String email,
       bool serverEnabled = false}) async {
-    await Firestore.instance.collection(USERS).document(userId).setData({
+    await userCollection.document(userId).setData({
       'displayName': displayName,
       'email': email,
       'ownedCalendars': {},
@@ -89,23 +100,25 @@ class DatabaseService2 {
     });
   }
 
-  // UPDATE user
-  Future updateUser(String userId,
+  // UPDATE user data
+  // input: userId
+  Future updateUserData(
       {String displayName, String email, bool serverEnabled}) async {
-    await Firestore.instance.collection(USERS).document(userId).setData({
+    await userCollection.document(userId).setData({
       if (displayName != null) 'displayName': displayName,
       if (email != null) 'email': email,
       if (serverEnabled != null) 'serverEnabled': serverEnabled,
     }, merge: true);
   }
 
-  //////////////////////////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////
   /// CALENDAR
-  //////////////////////////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////
 
   // CREATE calendar
-  Future<String> createCalendar(User user, String calendarName,
-      {String description = "",
+  // input: userId
+  Future<String> createCalendar(String name,
+      {String description = calendar_description,
       int backVisiblity = 0,
       int forwardVisibility = 2,
       int granularity = 60}) async {
@@ -114,11 +127,10 @@ class DatabaseService2 {
       DateTime today = DateTime(now.year, now.month, now.day);
 
       // Creates calendar
-      DocumentReference docRef =
-          await Firestore.instance.collection(CALENDARS).add({
-        'name': calendarName,
+      DocumentReference docRef = await calendarCollection.add({
+        'name': name,
         'description': description,
-        'owners': {user.userId: user.displayName},
+        'owners': {userId: temp_name},
         'followers': {},
         'backVisibility': backVisiblity,
         'forwardVisibility': forwardVisibility,
@@ -128,7 +140,7 @@ class DatabaseService2 {
         'requiresJoinApproval': true,
         'timeSlotRequiresOwnerApproval': true,
       });
-      String calendarId = docRef.documentID;
+      String newCalendarId = docRef.documentID;
 
       // Add time slots
       DateTime start = today.add(Duration(days: backVisiblity));
@@ -139,15 +151,14 @@ class DatabaseService2 {
           (i) => DateTime(
               start.year, start.month, start.day, start.hour + (i), 0, 0));
 
-      CollectionReference timeSlotsCollection = Firestore.instance
-          .collection(CALENDARS)
-          .document(calendarId)
-          .collection(TIMESLOTS);
+      CollectionReference timeSlotsCollection =
+          calendarCollection.document(newCalendarId).collection(TIMESLOTS);
 
       timeSlots.forEach((ts) async {
         String timeSlotId =
-            Calendar(calendarId: calendarId).constructTimeSlotId(ts);
+            Calendar(calendarId: newCalendarId).constructTimeSlotId(ts);
         await timeSlotsCollection.document(timeSlotId).setData({
+          //'timeSlotId': timeSlotId,
           'eventName': null,
           'status': 0,
           'occupants': {},
@@ -161,38 +172,31 @@ class DatabaseService2 {
       });
 
       // Updates user's owned calendars
-      await Firestore.instance
-          .collection(USERS)
-          .document(user.userId)
-          .updateData({
-        "ownedCalendars.$calendarId": calendarName,
+      await userCollection.document(userId).updateData({
+        "ownedCalendars.$newCalendarId": name,
       });
 
-      return calendarId;
+      return newCalendarId;
     } catch (e) {
       print(e.toString());
       return null;
     }
   }
 
-  // ADD user to calendar
-  Future addFollowerToCalendar(String userId, String calendarId) async {
+  // JOIN calendar
+  // input: userId, calendarId
+  Future joinCalendar() async {
     try {
-      DocumentSnapshot calendarSnapshot = await Firestore.instance
-          .collection(CALENDARS)
-          .document(calendarId)
-          .get(); // try to remove
+      DocumentSnapshot calendarSnapshot =
+          await calendarCollection.document(calendarId).get();
 
       // Adds user to calendar's list of followers
-      await Firestore.instance
-          .collection(CALENDARS)
-          .document(calendarId)
-          .updateData({
+      await calendarCollection.document(calendarId).updateData({
         "followers.$userId": temp_name,
       });
 
       // Updates user's followed calendars
-      await Firestore.instance.collection(USERS).document(userId).updateData({
+      await userCollection.document(userId).updateData({
         "followedCalendars.$calendarId":
             calendarSnapshot.data['name'] as String,
       });
@@ -201,20 +205,47 @@ class DatabaseService2 {
     }
   }
 
-  // REMOVE follower from calendar
-  Future removeFollowerFromCalendar(User user, String calendarId) async {
+  // ADD user to calendar
+  // input: none
+  Future addFollowerToCalendar(
+      String addedUserId, String addedCalendarId) async {
     try {
+      DocumentSnapshot calendarSnapshot =
+          await calendarCollection.document(addedCalendarId).get();
+
+      // Adds user to calendar's list of followers
+      await calendarCollection.document(addedCalendarId).updateData({
+        "followers.$addedUserId": temp_name,
+      });
+
+      // Updates user's followed calendars
+      await userCollection.document(addedUserId).updateData({
+        "followedCalendars.$addedCalendarId":
+            calendarSnapshot.data['name'] as String,
+      });
+    } catch (e) {
+      print(e.toString());
+    }
+  }
+
+  // LEAVE calendar or KICK from calendar
+  // input: userId, calendarId
+  Future leaveCalendar() async {
+    try {
+      DocumentSnapshot userSnapshot =
+          await userCollection.document(userId).get();
+
       // Remove user from all the calendar's time slots
-      List<String> timeSlotIdsToClear = Map<String, String>.from(user.bookings)
-          .entries
-          .where((element) => element.value == calendarId)
-          .map((element) => element.key)
-          .toList();
+      List<String> timeSlotIdsToClear =
+          Map<String, String>.from(userSnapshot.data['bookings'])
+              .entries
+              .where((element) => element.value == calendarId)
+              .map((element) => element.key)
+              .toList();
       timeSlotIdsToClear.forEach((tsId) async {
         Map<String, Object> deleteUserId = {};
-        deleteUserId["occupants.${user.userId}"] = FieldValue.delete();
-        await Firestore.instance
-            .collection(CALENDARS)
+        deleteUserId["occupants.$userId"] = FieldValue.delete();
+        await calendarCollection
             .document(calendarId)
             .collection(TIMESLOTS)
             .document(tsId)
@@ -223,21 +254,20 @@ class DatabaseService2 {
 
       // Removes user from calendar's list of followers
       Map<String, Object> deleteFollowerId = {};
-      deleteFollowerId["followers.${user.userId}"] = FieldValue.delete();
-      await Firestore.instance
-          .collection(CALENDARS)
+      deleteFollowerId["followers.$userId"] = FieldValue.delete();
+      await calendarCollection
           .document(calendarId)
           .updateData(deleteFollowerId);
 
       // Updates user's followed calendars and bookings
       Map<String, String> bookings =
-          new Map<String, String>.from(user.bookings);
+          new Map<String, String>.from(userSnapshot.data['bookings']);
       final Map<String, String> followedCalendars =
-          new Map<String, String>.from(user.followedCalendars);
+          new Map<String, String>.from(userSnapshot.data['followedCalendars']);
       bookings = Map<String, String>.fromEntries(
           bookings.entries.where((element) => element.value != calendarId));
       followedCalendars.remove(calendarId);
-      await Firestore.instance.collection(USERS).document(user.userId).setData({
+      await userCollection.document(userId).setData({
         'bookings': bookings,
         'followedCalendars': followedCalendars,
       }, merge: true);
@@ -246,13 +276,11 @@ class DatabaseService2 {
     }
   }
 
-  // UPDATE calendar
-  Future updateCalendar(String calendarId,
+  // UPDATE calendar data
+  // input: calendarId
+  Future updateCalendarData(
       {String name, String description, int granularity}) async {
-    await Firestore.instance
-        .collection(CALENDARS)
-        .document(calendarId)
-        .setData({
+    await calendarCollection.document(calendarId).setData({
       if (name != null) 'name': name,
       if (description != null) 'description': description,
       if (granularity != null) 'granularity': granularity,
@@ -262,53 +290,69 @@ class DatabaseService2 {
   // DELETE calendar
   Future deleteCalendar() async {}
 
-  //////////////////////////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////
   /// TIME SLOT
-  //////////////////////////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////
 
-  // ADD occupant to time slot
-  Future addOccupantToTimeSlot(
-      User user, String calendarId, String timeSlotId) async {
+  // JOIN time slot
+  // input: userId, calendarId, timeSlotId
+  Future joinTimeSlot(String name) async {
     try {
       // Adds user to time slot's occupants
-      await Firestore.instance
-          .collection(CALENDARS)
+      await calendarCollection
           .document(calendarId)
           .collection(TIMESLOTS)
           .document(timeSlotId)
           .updateData({
-        "occupants.$user.userId": user.displayName,
+        "occupants.$userId": name,
       });
 
       // Updates user's bookings
-      await Firestore.instance
-          .collection(USERS)
-          .document(user.userId)
-          .updateData({
-        "bookings.$timeSlotId": calendarId,
+      await userCollection.document(userId).updateData({
+        "bookings.$timeSlotId":
+            calendarId, //timeSlotSnapshot.data['eventName'] as String, <- this is null btw
       });
     } catch (e) {
       print(e.toString());
     }
   }
 
-  // REMOVE occupant from time slot
-  Future removeOccupantFromTimeSlot(
-      String userId, String calendarId, String timeSlotId) async {
+  // ADD occupant to time slot
+  // input: userId, calendarId, timeSlotId
+  Future addOccupantToTimeSlot(String addedUserId, String addedCalendarId,
+      String addedTimeSlotId, String name) async {
+    try {
+      // Adds user to time slot's occupants
+      await calendarCollection
+          .document(addedCalendarId)
+          .collection(TIMESLOTS)
+          .document(addedTimeSlotId)
+          .updateData({
+        "occupants.$addedUserId": name,
+      });
+
+      // Updates user's bookings
+      await userCollection.document(addedUserId).updateData({
+        "bookings.$addedTimeSlotId": addedCalendarId,
+      });
+    } catch (e) {
+      print(e.toString());
+    }
+  }
+
+  // LEAVE time slot
+  // input: userId, calendarId, timeSlotId
+  Future leaveTimeSlot() async {
     try {
       // Updates user's bookings
       Map<String, Object> deleteTimeSlotId = {};
       deleteTimeSlotId["bookings.$timeSlotId"] = FieldValue.delete();
-      await Firestore.instance
-          .collection(USERS)
-          .document(userId)
-          .updateData(deleteTimeSlotId);
+      await userCollection.document(userId).updateData(deleteTimeSlotId);
 
       // Removes user to time slot's occupants
       Map<String, Object> deleteUserId = {};
       deleteUserId["occupants.$userId"] = FieldValue.delete();
-      await Firestore.instance
-          .collection(CALENDARS)
+      await calendarCollection
           .document(calendarId)
           .collection(TIMESLOTS)
           .document(timeSlotId)
@@ -318,60 +362,88 @@ class DatabaseService2 {
     }
   }
 
-  // UPDATE time slot
-  Future updateTimeSlot(String calendarId, TimeSlot timeSlot,
-      {int status}) async {
-    if (status == 0) {
-      Map<String, String> occupants =
-          Map<String, String>.from(timeSlot.occupants);
+  // KICK from time slot
+  // input: none
+  Future kickFromTimeSlot(String kickedUserId, String kickedCalendarId,
+      String kickedTimeSlotId) async {
+    try {
+      // Updates user's bookings
+      Map<String, Object> deleteTimeSlotId = {};
+      deleteTimeSlotId["bookings.$kickedTimeSlotId"] = FieldValue.delete();
+      await userCollection.document(kickedUserId).updateData(deleteTimeSlotId);
 
+      // Removes user to time slot's occupants
+      Map<String, Object> deleteUserId = {};
+      deleteUserId["occupants.$kickedUserId"] = FieldValue.delete();
+      await calendarCollection
+          .document(kickedCalendarId)
+          .collection(TIMESLOTS)
+          .document(kickedTimeSlotId)
+          .updateData(deleteUserId);
+    } catch (e) {
+      print(e.toString());
+    }
+  }
+
+  // UPDATE time slot data
+  // input: calendarId, timeSlotId
+  Future updateTimeSlotData({int status}) async {
+    if (status == 0) {
+      DocumentSnapshot snapshot = await calendarCollection
+          .document(calendarId)
+          .collection(TIMESLOTS)
+          .document(timeSlotId)
+          .get();
+      Map<String, String> occupants =
+          Map<String, String>.from(snapshot.data['occupants']);
       // leave time slot for each occupant
-      occupants.forEach((userId, name) async {
-        await removeOccupantFromTimeSlot(
-            userId, calendarId, timeSlot.timeSlotId);
+      occupants.forEach((kickedUserId, kickedName) async {
+        await kickFromTimeSlot(kickedUserId, calendarId, timeSlotId);
       });
     }
-    await Firestore.instance
-        .collection(CALENDARS)
+    await calendarCollection
         .document(calendarId)
         .collection(TIMESLOTS)
-        .document(timeSlot.timeSlotId)
+        .document(timeSlotId)
         .setData({
       if (status != null) 'status': status,
     }, merge: true);
   }
 
-  //////////////////////////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////
   /// REQUEST
-  //////////////////////////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////
 
   // CREATE request to join calendar
-  Future<bool> createJoinCalendarRequest(User user, Calendar calendar,
+  // input: userId, calendarId
+  Future<bool> createRequestJoinCalendar(String name,
       {String message = ""}) async {
     try {
-      if (Map<String, String>.from(calendar.followers)
-              .containsKey(user.userId) ||
-          Map<String, String>.from(calendar.requests)
-              .containsValue(user.userId)) {
+      DocumentSnapshot calendarSnapshot =
+          await calendarCollection.document(calendarId).get();
+
+      // if the user is already a follower or has a pending request, do nothing.
+      if (Map<String, String>.from(calendarSnapshot.data['followers'])
+              .containsKey(userId) ||
+          Map<String, String>.from(calendarSnapshot.data['requests'])
+              .containsValue(userId)) {
         return null;
       }
 
-      // if no approval is required to join, then join the calendar
-      if (calendar.requiresJoinApproval == false) {
-        await addFollowerToCalendar(user.userId, calendar.calendarId);
+      if (calendarSnapshot.data['requiresJoinApproval'] as bool == false) {
+        joinCalendar();
         return true;
       }
 
       DateTime now = DateTime.now();
 
       // creates a request and gets requestId
-      DocumentReference docRef =
-          await Firestore.instance.collection(REQUESTS).add({
+      DocumentReference docRef = await requestCollection.add({
         'type': "calendar",
-        'itemId': calendar.calendarId,
-        'requesterId': user.userId,
-        'requesterName': user.displayName,
-        'ownerApprovers': calendar.owners,
+        'itemId': calendarId,
+        'requesterId': userId,
+        'requesterName': name,
+        'ownerApprovers': calendarSnapshot.data['owners'],
         'otherApprovers': {},
         'hasOwnerApproval': false,
         'hasOtherApproval': true,
@@ -382,30 +454,21 @@ class DatabaseService2 {
       String newRequestId = docRef.documentID;
 
       // update outgoing requests for requester
-      await Firestore.instance
-          .collection(USERS)
-          .document(user.userId)
-          .updateData({
-        "outgoingRequests.$newRequestId": calendar.calendarId,
+      await userCollection.document(userId).updateData({
+        "outgoingRequests.$newRequestId": calendarId,
       });
 
       // update incoming requests for approvers
-      Map<String, String>.from(calendar.owners)
+      Map<String, String>.from(calendarSnapshot.data['owners'])
           .forEach((approverUserId, approverName) async {
-        await Firestore.instance
-            .collection(USERS)
-            .document(approverUserId)
-            .updateData({
-          "incomingRequests.$newRequestId": calendar.calendarId,
+        await userCollection.document(approverUserId).updateData({
+          "incomingRequests.$newRequestId": calendarId,
         });
       });
 
       // update requests for calendar
-      await Firestore.instance
-          .collection(CALENDARS)
-          .document(calendar.calendarId)
-          .updateData({
-        "requests.$newRequestId": user.userId,
+      await calendarCollection.document(calendarId).updateData({
+        "requests.$newRequestId": userId,
       });
 
       return false;
@@ -416,12 +479,12 @@ class DatabaseService2 {
   }
 
   // RESPOND to request to join calendar
-  Future respondJoinCalendarRequest(
-      String userId, Request request, int decision) async {
+  // Input: userId, requestId
+  Future respondRequestJoinCalendar(int decision) async {
     // get the request object
-    // DocumentSnapshot snapshot =
-    //     await requestCollection.document(requestId).get();
-    // Request request = Request.fromSnapshot(snapshot);
+    DocumentSnapshot snapshot =
+        await requestCollection.document(requestId).get();
+    Request request = Request.fromSnapshot(snapshot);
 
     // add the approver user's decision
     request.responses[userId] = decision;
@@ -440,32 +503,29 @@ class DatabaseService2 {
     // if the request has passed, add user to calendar, then delete the request
     if (request.hasOwnerApproval) {
       await addFollowerToCalendar(request.requesterId, request.itemId);
-      await deleteJoinCalendarRequest(request);
+      await deleteCalendarRequest(request);
     }
     // else if the request has certain failed, delete the request from requests, users, and calendars
     else if (request.ownerApprovers.length == ownerResponses.length) {
       // if the number of people remaining is strictly less than the number of approvals needed
-      await deleteJoinCalendarRequest(request);
+      await deleteCalendarRequest(request);
     }
     // else, update the request in firestore
     else {
-      await Firestore.instance
-          .collection(REQUESTS)
-          .document(request.requestId)
-          .updateData({
+      await requestCollection.document(requestId).updateData({
         "responses.${request.requesterId}": decision,
       });
     }
   }
 
   // DELETE join calendar request
-  Future deleteJoinCalendarRequest(Request request) async {
+  // input: none
+  Future deleteCalendarRequest(Request request) async {
     // delete outgoing request for requester user
     Map<String, Object> deleteOutgoingRequestId = {};
-    deleteOutgoingRequestId["outgoingRequests.${request.requestId}"] =
+    deleteOutgoingRequestId["outgoingRequests.$requestId"] =
         FieldValue.delete();
-    await Firestore.instance
-        .collection(REQUESTS)
+    await userCollection
         .document(request.requesterId)
         .updateData(deleteOutgoingRequestId);
 
@@ -475,68 +535,72 @@ class DatabaseService2 {
     // delete incoming request for approver users
     approvers.forEach((approverUserId, approverName) async {
       Map<String, Object> deleteIncomingRequestId = {};
-      deleteIncomingRequestId["incomingRequests.${request.requestId}"] =
+      deleteIncomingRequestId["incomingRequests.$requestId"] =
           FieldValue.delete();
-      await Firestore.instance
-          .collection(USERS)
+      await userCollection
           .document(approverUserId)
           .updateData(deleteIncomingRequestId);
     });
 
     // delete request from calendar
     Map<String, Object> deleteCalendarRequestId = {};
-    deleteCalendarRequestId["requests.${request.requestId}"] =
-        FieldValue.delete();
-    await Firestore.instance
-        .collection(CALENDARS)
+    deleteCalendarRequestId["requests.$requestId"] = FieldValue.delete();
+    await calendarCollection
         .document(request.itemId)
         .updateData(deleteCalendarRequestId);
 
     // delete request object
-    await Firestore.instance
-        .collection(REQUESTS)
-        .document(request.requestId)
-        .delete();
+    await requestCollection.document(requestId).delete();
   }
 
   // CREATE request to join calendar time slot
   // input: userId, calendarId, timeSlotId
-  Future<bool> createJoinTimeSlotRequest(
-      User user, Calendar calendar, TimeSlot timeSlot,
+  Future<bool> createRequestJoinTimeSlot(String name,
       {String message = ""}) async {
     try {
+      DocumentSnapshot userSnapshot =
+          await userCollection.document(userId).get();
+      DocumentSnapshot calendarSnapshot =
+          await calendarCollection.document(calendarId).get();
+      DocumentSnapshot timeSlotSnapshot = await calendarCollection
+          .document(calendarId)
+          .collection(TIMESLOTS)
+          .document(timeSlotId)
+          .get();
+
       // if the user is already an occupant or has a pending request, do nothing.
-      if (Map<String, String>.from(timeSlot.occupants)
-              .containsKey(user.userId) ||
-          Map<String, String>.from(timeSlot.requests)
-              .containsValue(user.userId)) {
+      if (Map<String, String>.from(timeSlotSnapshot.data['occupants'])
+              .containsKey(userId) ||
+          Map<String, String>.from(timeSlotSnapshot.data['requests'])
+              .containsValue(userId)) {
         return null;
       }
 
-      if (calendar.timeSlotRequiresOwnerApproval == false) {
-        addOccupantToTimeSlot(user, calendar.calendarId, timeSlot.timeSlotId);
+      if (calendarSnapshot.data['timeSlotRequiresOwnerApproval'] as bool ==
+          false) {
+        joinTimeSlot(name);
         return true;
       }
 
       DateTime now = DateTime.now();
       Map approvers = {};
-      approvers.addAll(calendar.owners);
+      approvers.addAll(calendarSnapshot.data['owners']);
       // If the time slot is full, add the occupants as approvers
-      bool isFull = timeSlot.occupants.length >= timeSlot.limit;
+      bool isFull = timeSlotSnapshot.data['occupants'].length >=
+          timeSlotSnapshot.data['limit'];
       if (isFull) {
-        approvers.addAll(timeSlot.occupants);
+        approvers.addAll(timeSlotSnapshot.data['occupants']);
       } // else, only owner approval is required
       approvers = Map<String, String>.from(approvers);
 
       // creates a request and gets requestId
-      DocumentReference docRef =
-          await Firestore.instance.collection(REQUESTS).add({
+      DocumentReference docRef = await requestCollection.add({
         'type': "timeSlot",
-        'itemId': timeSlot.timeSlotId,
-        'requesterId': user.userId,
-        'requesterName': user.displayName,
-        'ownerApprovers': calendar.owners,
-        'otherApprovers': timeSlot.occupants,
+        'itemId': timeSlotId,
+        'requesterId': userId,
+        'requesterName': name,
+        'ownerApprovers': calendarSnapshot.data['owners'],
+        'otherApprovers': timeSlotSnapshot.data['occupants'],
         'hasOwnerApproval': false,
         'hasOtherApproval': !isFull,
         'responses': {},
@@ -546,32 +610,25 @@ class DatabaseService2 {
       String newRequestId = docRef.documentID;
 
       // update outgoing requests for requester
-      await Firestore.instance
-          .collection(USERS)
-          .document(user.userId)
-          .updateData({
-        "outgoingRequests.$newRequestId": timeSlot.timeSlotId,
+      await userCollection.document(userId).updateData({
+        "outgoingRequests.$newRequestId": timeSlotId,
       });
 
       // update incoming requests for approvers
       Map<String, String>.from(approvers)
           .forEach((approverUserId, approverName) async {
-        await Firestore.instance
-            .collection(USERS)
-            .document(approverUserId)
-            .updateData({
-          "incomingRequests.$newRequestId": timeSlot.timeSlotId,
+        await userCollection.document(approverUserId).updateData({
+          "incomingRequests.$newRequestId": timeSlotId,
         });
       });
 
       // update requests for time slots
-      await Firestore.instance
-          .collection(CALENDARS)
-          .document(calendar.calendarId)
+      await calendarCollection
+          .document(calendarId)
           .collection(TIMESLOTS)
-          .document(timeSlot.timeSlotId)
+          .document(timeSlotId)
           .updateData({
-        "requests.$newRequestId": user.userId,
+        "requests.$newRequestId": userId,
       });
 
       return false;
@@ -582,10 +639,13 @@ class DatabaseService2 {
   }
 
   // RESPOND to request to join time slot
-  // TODO: if a time slot request is accepted, then delete other requests for the same time slot.
-  Future respondJoinTimeSlotRequest(
-      String userId, Request request, int decision) async {
-    String calendarId = request.itemId.split("-")[0];
+  // Input: userId, requestId, ?
+  Future respondRequestJoinTimeSlot(int decision) async {
+    // get the request object
+    DocumentSnapshot snapshot =
+        await requestCollection.document(requestId).get();
+    Request request = Request.fromSnapshot(snapshot);
+    String timeSlotCalendarId = request.itemId.split("-")[0];
 
     // add the approver user's decision
     request.responses[userId] = decision;
@@ -600,6 +660,7 @@ class DatabaseService2 {
     bool isOwner = request.ownerApprovers.containsKey(userId);
     bool isOther = request.otherApprovers.containsKey(userId);
     if (isOwner) {
+      print('is owner');
       request.hasOwnerApproval = decision == 1
           ? true
           : ownerResponses.entries
@@ -609,6 +670,7 @@ class DatabaseService2 {
     }
     // if the user is an other, update
     if (isOther) {
+      print('is other');
       request.hasOtherApproval = decision == 1
           ? true
           : otherResponses.entries
@@ -617,17 +679,16 @@ class DatabaseService2 {
               0;
     }
 
+    print('1');
     // if the request has passed, add user to calendar, then delete the request
     if (request.hasOwnerApproval && request.hasOtherApproval) {
+      print('passed');
       request.otherApprovers.forEach((kickedUserId, kickedName) async {
-        await removeOccupantFromTimeSlot(
-            kickedUserId, calendarId, request.itemId);
+        await kickFromTimeSlot(
+            kickedUserId, timeSlotCalendarId, request.itemId);
       });
-      await addOccupantToTimeSlot(
-          new User(
-              userId: request.requesterId, displayName: request.requesterName),
-          calendarId,
-          request.itemId);
+      await addOccupantToTimeSlot(request.requesterId, timeSlotCalendarId,
+          request.itemId, request.requesterName);
       await deleteTimeSlotRequest(request);
     }
     // else if the request has for certain failed,
@@ -636,14 +697,13 @@ class DatabaseService2 {
             !request.hasOwnerApproval) ||
         (otherResponses.length == request.otherApprovers.length &&
             !request.hasOwnerApproval)) {
+      print('failed');
       await deleteTimeSlotRequest(request);
     }
     // else, update the request in firestore
     else {
-      await Firestore.instance
-          .collection(REQUESTS)
-          .document(request.requestId)
-          .updateData({
+      print('update');
+      await requestCollection.document(requestId).updateData({
         if (isOwner) "hasOwnerApproval": request.hasOwnerApproval,
         if (isOther) "hasOtherApproval": request.hasOtherApproval,
         "responses.${request.requesterId}": decision,
@@ -652,15 +712,15 @@ class DatabaseService2 {
   }
 
   // DELETE join time slot request
+  // input: none
   Future deleteTimeSlotRequest(Request request) async {
-    String calendarId = request.itemId.split("-")[0];
+    String timeSlotCalendarId = request.itemId.split("-")[0];
 
     // delete outgoing request for requester user
     Map<String, Object> deleteOutgoingRequestId = {};
-    deleteOutgoingRequestId["outgoingRequests.${request.requestId}"] =
+    deleteOutgoingRequestId["outgoingRequests.$requestId"] =
         FieldValue.delete();
-    await Firestore.instance
-        .collection(USERS)
+    await userCollection
         .document(request.requesterId)
         .updateData(deleteOutgoingRequestId);
 
@@ -671,29 +731,23 @@ class DatabaseService2 {
     // delete incoming request for approver users
     approvers.forEach((approverUserId, approverName) async {
       Map<String, Object> deleteIncomingRequestId = {};
-      deleteIncomingRequestId["incomingRequests.${request.requestId}"] =
+      deleteIncomingRequestId["incomingRequests.$requestId"] =
           FieldValue.delete();
-      await Firestore.instance
-          .collection(USERS)
+      await userCollection
           .document(approverUserId)
           .updateData(deleteIncomingRequestId);
     });
 
     // delete request from time slot
     Map<String, Object> deleteTimeSlotRequestId = {};
-    deleteTimeSlotRequestId["requests.${request.requestId}"] =
-        FieldValue.delete();
-    await Firestore.instance
-        .collection(CALENDARS)
-        .document(calendarId)
+    deleteTimeSlotRequestId["requests.$requestId"] = FieldValue.delete();
+    await calendarCollection
+        .document(timeSlotCalendarId)
         .collection(TIMESLOTS)
         .document(request.itemId)
         .updateData(deleteTimeSlotRequestId);
 
     // delete request object
-    await Firestore.instance
-        .collection(REQUESTS)
-        .document(request.requestId)
-        .delete();
+    await requestCollection.document(requestId).delete();
   }
 }

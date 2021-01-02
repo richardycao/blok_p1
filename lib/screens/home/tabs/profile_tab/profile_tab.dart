@@ -46,8 +46,8 @@ class _ProfileState extends State<Profile> {
                   setState(() {
                     widget.onServerEnabled(result);
                   });
-                  await DatabaseService(userId: user.userId)
-                      .updateUserData(serverEnabled: result);
+                  await DatabaseService()
+                      .updateUser(user.userId, serverEnabled: result);
                 }),
           ),
         if (user.email == null)
