@@ -14,6 +14,7 @@ class Calendar {
   int granularity; // in minutes
   Map<String, String> requests; // requestId : userId
   bool requiresJoinApproval;
+  bool timeSlotRequiresOwnerApproval;
 
   Calendar({
     this.calendarId,
@@ -27,6 +28,7 @@ class Calendar {
     this.granularity,
     this.requests,
     this.requiresJoinApproval,
+    this.timeSlotRequiresOwnerApproval,
   });
 
   factory Calendar.fromSnapshot(DocumentSnapshot snapshot) {
@@ -46,6 +48,8 @@ class Calendar {
       granularity: data['granularity'] as int ?? null,
       requests: Map<String, String>.from(data['requests']) ?? {},
       requiresJoinApproval: data['requiresJoinApproval'] as bool ?? null,
+      timeSlotRequiresOwnerApproval:
+          data['timeSlotRequiresOwnerApproval'] as bool ?? null,
     );
   }
 
