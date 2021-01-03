@@ -2,10 +2,10 @@ import 'package:blok_p1/models/request.dart';
 import 'package:blok_p1/services/database.dart';
 import 'package:flutter/material.dart';
 
-class OwnedCalendarJoinRequestsTile extends StatelessWidget {
+class OwnedCalendarJoinCalendarRequestTile extends StatelessWidget {
   final Request request;
   final String approverUserId;
-  OwnedCalendarJoinRequestsTile({this.request, this.approverUserId});
+  OwnedCalendarJoinCalendarRequestTile({this.request, this.approverUserId});
 
   @override
   Widget build(BuildContext context) {

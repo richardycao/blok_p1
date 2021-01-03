@@ -82,12 +82,12 @@ class TimeSlots extends CalendarDataSource {
   }
 
   // update this.appointments with the document changes
-  // void updateSources(TimeSlots ts, int granularity) {
-  //   ts.timeSlots.entries.forEach((element) {
-  //     timeSlots[element.key] = element.value;
-  //   });
-  //   appointments = timeSlots.entries.map((e) => e.value).toList();
-  // }
+  void updateSources(TimeSlots ts, int granularity) {
+    ts.timeSlots.entries.forEach((element) {
+      timeSlots[element.key] = element.value;
+    });
+    appointments = timeSlots.entries.map((e) => e.value).toList();
+  }
 
   @override
   DateTime getStartTime(int index) {

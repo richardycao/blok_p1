@@ -1,6 +1,6 @@
 import 'package:blok_p1/constants/testing_constants.dart';
 import 'package:blok_p1/screens/calendar/followed_calendar/followed_calendar.dart';
-import 'package:blok_p1/screens/calendar/followed_calendar/followed_calendar_arguments.dart';
+import 'package:blok_p1/screens/calendar/followed_calendar/arguments.dart';
 import 'package:blok_p1/screens/common/loading.dart';
 import 'package:blok_p1/services/database.dart';
 import 'package:firebase_auth/firebase_auth.dart';

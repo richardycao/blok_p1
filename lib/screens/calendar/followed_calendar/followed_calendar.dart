@@ -2,7 +2,7 @@ import 'package:blok_p1/models/calendar.dart';
 import 'package:blok_p1/models/request.dart';
 import 'package:blok_p1/models/time_slot.dart';
 import 'package:blok_p1/models/user.dart';
-import 'package:blok_p1/screens/calendar/followed_calendar/followed_calendar_arguments.dart';
+import 'package:blok_p1/screens/calendar/followed_calendar/arguments.dart';
 import 'package:blok_p1/screens/calendar/followed_calendar/followed_calendar_join_time_slot_request_tile.dart';
 import 'package:blok_p1/services/database.dart';
 import 'package:firebase_auth/firebase_auth.dart';

@@ -1,6 +1,6 @@
 import 'package:blok_p1/models/calendar.dart';
 import 'package:blok_p1/screens/calendar/followed_calendar/followed_calendar.dart';
-import 'package:blok_p1/screens/calendar/followed_calendar/followed_calendar_arguments.dart';
+import 'package:blok_p1/screens/calendar/followed_calendar/arguments.dart';
 import 'package:flutter/material.dart';
 
 class FollowedCalendarTile extends StatelessWidget {

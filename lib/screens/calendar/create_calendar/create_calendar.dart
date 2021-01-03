@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import 'package:blok_p1/screens/calendar/owned_calendar/owned_calendar.dart';
-import 'package:blok_p1/screens/calendar/owned_calendar/owned_calendar_arguments.dart';
+import 'package:blok_p1/screens/calendar/owned_calendar/arguments.dart';
 import 'package:blok_p1/screens/common/loading.dart';
 import 'package:blok_p1/services/database.dart';
 import 'package:firebase_auth/firebase_auth.dart';

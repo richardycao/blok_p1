@@ -1,6 +1,6 @@
 import 'package:blok_p1/models/user.dart';
 import 'package:blok_p1/screens/common/loading.dart';
-import 'package:blok_p1/screens/home/home_menu.dart';
+import 'package:blok_p1/screens/home/menu.dart';
 import 'package:blok_p1/screens/home/tabs/tabs.dart';
 import 'package:blok_p1/services/database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -42,7 +42,6 @@ class _HomeState extends State<Home> {
         return tabs.item(_tabIndex) == null
             ? Loading
             : Scaffold(
-                drawer: HomeMenu(),
                 appBar: AppBar(
                   title: tabs.item(_tabIndex).title,
                   actions: <Widget>[

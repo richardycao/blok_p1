@@ -2,15 +2,16 @@ import 'package:blok_p1/models/calendar.dart';
 import 'package:blok_p1/models/request.dart';
 import 'package:blok_p1/models/time_slot.dart';
 import 'package:blok_p1/models/user.dart';
-import 'package:blok_p1/screens/calendar/owned_calendar/owned_calendar_arguments.dart';
-import 'package:blok_p1/screens/calendar/owned_calendar/owned_calendar_follower_tile.dart';
-import 'package:blok_p1/screens/calendar/owned_calendar/owned_calendar_join_requests_tile.dart';
-import 'package:blok_p1/screens/calendar/owned_calendar/owned_calendar_join_time_slot_request_tile.dart';
+import 'package:blok_p1/screens/calendar/owned_calendar/arguments.dart';
+import 'package:blok_p1/screens/calendar/owned_calendar/calendar/owned_sfcalendar.dart';
+import 'package:blok_p1/screens/calendar/owned_calendar/menu/follower_tile.dart';
+import 'package:blok_p1/screens/calendar/owned_calendar/menu/join_calendar_request_tile.dart';
+import 'package:blok_p1/screens/calendar/owned_calendar/menu/join_time_slot_request_tile.dart';
+import 'package:blok_p1/screens/calendar/owned_calendar/menu/menu.dart';
 import 'package:blok_p1/services/database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:syncfusion_flutter_calendar/calendar.dart';
 
 class OwnedCalendarPage extends StatefulWidget {
   static const route = '/calendar/owned';
@@ -19,15 +20,16 @@ class OwnedCalendarPage extends StatefulWidget {
 }
 
 class _OwnedCalendarPageState extends State<OwnedCalendarPage> {
-  bool isEditing = false;
+  TimeSlots _timeSlots = TimeSlots(timeSlots: {});
+  bool _isEditing = false;
+
+  void _updateTimeSlots() {}
 
   @override
   Widget build(BuildContext context) {
     final OwnedCalendarArguments args =
         ModalRoute.of(context).settings.arguments;
     final FirebaseUser firebaseUser = Provider.of<FirebaseUser>(context);
-
-    DateTime now = DateTime.now();
 
     return MultiProvider(
       providers: [
@@ -45,13 +47,18 @@ class _OwnedCalendarPageState extends State<OwnedCalendarPage> {
       builder: (context, child) {
         final User user = Provider.of<User>(context);
         final Calendar calendar = Provider.of<Calendar>(context);
-        final TimeSlots timeSlots = Provider.of<TimeSlots>(context);
+
+        // WidgetsBinding.instance.addPostFrameCallback((_) {
+        //   print('rebuild');
+        //   timeSlots.updateSources(timeSlots, calendar.granularity);
+        // });
 
         return Scaffold(
+          endDrawer: OwnedCalendarMenu(),
           appBar: AppBar(
             title: Text(calendar == null
                 ? ''
-                : isEditing
+                : _isEditing
                     ? 'Editing: ' + calendar.name
                     : calendar.name),
             actions: [
@@ -77,9 +84,7 @@ class _OwnedCalendarPageState extends State<OwnedCalendarPage> {
                             return ListView.builder(
                               itemCount: pendingTimeSlotRequests.length,
                               itemBuilder: (context, index) {
-                                // return Text(pendingTimeSlotRequests[index]
-                                //     .requesterName);
-                                return OwnedCalendarJoinTimeSlotRequestsTile(
+                                return OwnedCalendarJoinTimeSlotRequestTile(
                                   request: pendingTimeSlotRequests[index],
                                   approverUserId: firebaseUser.uid,
                                 );
@@ -109,7 +114,7 @@ class _OwnedCalendarPageState extends State<OwnedCalendarPage> {
                             return ListView.builder(
                               itemCount: pendingJoinRequests.length,
                               itemBuilder: (context, index) {
-                                return OwnedCalendarJoinRequestsTile(
+                                return OwnedCalendarJoinCalendarRequestTile(
                                   request: pendingJoinRequests[index],
                                   approverUserId: firebaseUser.uid,
                                 );
@@ -156,10 +161,10 @@ class _OwnedCalendarPageState extends State<OwnedCalendarPage> {
                 child: FlatButton(
                     onPressed: () {
                       setState(() {
-                        isEditing = !isEditing;
+                        _isEditing = !_isEditing;
                       });
                     },
-                    child: isEditing
+                    child: _isEditing
                         ? Icon(
                             Icons.edit_off,
                             size: 25.0,
@@ -168,60 +173,7 @@ class _OwnedCalendarPageState extends State<OwnedCalendarPage> {
               ),
             ],
           ),
-          body: Container(
-            child: SfCalendar(
-              // minDate and maxDate prevent scrolling to previous dates (limits visibility)
-
-              // for paying server, min will be the day they started
-              // for nonpaying server, min will be the day they started
-              // for client, min will be the day they joined.
-
-              // for paying server, max will be 1 year in the future
-              // for nonpaying server, max will be 1 month in the future
-              // for client, max will be same as the calendar's server
-
-              // specialRegions can make time slots uninteractable
-              // for all, time slots from minDate to present are uninteractable
-              // the server can choose which future time slots are interactable
-              minDate: DateTime(now.year, now.month, now.day).add(Duration(
-                  days: calendar != null ? calendar.backVisibility : 0)),
-              maxDate: DateTime(now.year, now.month, now.day).add(Duration(
-                  days: calendar != null ? calendar.forwardVisibility : 0)),
-              dataSource: timeSlots,
-              onTap: isEditing == false
-                  ? null
-                  : (CalendarTapDetails details) async {
-                      DateTime dt = details.appointments == null
-                          ? details.date
-                          : details.appointments[0].from;
-                      String timeSlotId = calendar.constructTimeSlotId(dt);
-
-                      if (timeSlots == null) {
-                        // do nothing
-                      } else if (timeSlots.timeSlots.containsKey(timeSlotId)) {
-                        int status =
-                            timeSlots.timeSlots[timeSlotId].status == 0 ? 1 : 0;
-                        await DatabaseService().updateTimeSlot(
-                            calendar.calendarId,
-                            timeSlots.timeSlots[timeSlotId],
-                            status: status);
-                      } else {
-                        print('out of range');
-                      }
-                    },
-              view: CalendarView.day, // move this to calendar settings later
-              //specialRegions: _unavailableTimeSlots(), // move this to calendar settings later
-              timeSlotViewSettings: TimeSlotViewSettings(
-                  // move this to calendar settings later
-                  timeInterval: calendar != null
-                      ? Duration(minutes: calendar.granularity)
-                      : const Duration(minutes: 60),
-                  timeIntervalHeight: 70,
-                  startHour: 0,
-                  endHour: 24,
-                  nonWorkingDays: <int>[DateTime.saturday, DateTime.sunday]),
-            ),
-          ),
+          body: OwnedSfCalendar(),
         );
       },
     );
